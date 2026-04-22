@@ -76,6 +76,15 @@ function updateWater(person, ml) {
     fbUpdate(person, { water: val });
 }
 
+function updateStudy(person, seconds) {
+    const s      = state[person];
+    const newVal = Math.max(0, Math.min(GOALS[person].studySeconds, effectiveStudySeconds(person) + seconds));
+    // Se o timer estiver rodando, reseta timerStartedAt para evitar dupla contagem
+    fbUpdate(person, s.timerRunning
+        ? { studySeconds: newVal, timerStartedAt: Date.now() }
+        : { studySeconds: newVal });
+}
+
 function toggleGym(person) {
     fbUpdate(person, { gym: !state[person].gym });
 }
