@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico – Competição Diária</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hist-app {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        .hist-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .hist-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .btn-back {
+            background: var(--bg-task);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.35rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .btn-back:hover { color: var(--text); border-color: #555; }
+
+        /* ── Card do calendário ── */
+        .calendar-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+
+        /* ── Navegação de mês ── */
+        .month-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn-month {
+            background: var(--bg-task);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        .btn-month:hover:not(:disabled) { background: #2a2a4a; }
+        .btn-month:disabled { opacity: 0.3; cursor: default; }
+
+        .month-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            text-transform: capitalize;
+        }
+
+        /* ── Grid ── */
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .weekday-label {
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 2px 0 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 500;
+            cursor: default;
+            transition: transform 0.1s, box-shadow 0.1s;
+            position: relative;
+        }
+
+        .day-cell:not(.empty):not(.future):hover {
+            transform: scale(1.15);
+            z-index: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .day-cell.empty   { background: transparent; }
+        .day-cell.future  { background: #151530; color: #2d2d50; }
+        .day-cell.no-data { background: #1e1e3a; color: #4a4a6a; }
+
+        .day-cell.guilherme { background: var(--color-g); color: #fff; }
+        .day-cell.luana     { background: var(--color-l); color: #fff; }
+        .day-cell.empate    { background: #d97706; color: #fff; }
+
+        .day-cell.today {
+            outline: 2px solid var(--text-muted);
+            outline-offset: -2px;
+        }
+
+        /* ── Legenda ── */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem 1rem;
+            margin-top: 1.25rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ── Totais do mês ── */
+        .month-totals {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .total-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .total-count {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .total-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .total-item.g .total-count { color: var(--color-g-light); }
+        .total-item.l .total-count { color: var(--color-l-light); }
+        .total-item.e .total-count { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="hist-app">
+
+        <div class="hist-header">
+            <a href="index.html" class="btn-back">← Voltar</a>
+            <h1>📅 Histórico</h1>
+        </div>
+
+        <div class="calendar-card">
+            <div class="month-nav">
+                <button class="btn-month" id="btnPrev" onclick="changeMonth(-1)">‹</button>
+                <span class="month-title" id="monthTitle"></span>
+                <button class="btn-month" id="btnNext" onclick="changeMonth(1)">›</button>
+            </div>
+
+            <div class="weekdays">
+                <div class="weekday-label">Dom</div>
+                <div class="weekday-label">Seg</div>
+                <div class="weekday-label">Ter</div>
+                <div class="weekday-label">Qua</div>
+                <div class="weekday-label">Qui</div>
+                <div class="weekday-label">Sex</div>
+                <div class="weekday-label">Sáb</div>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid"></div>
+
+            <div class="month-totals">
+                <div class="total-item g">
+                    <span class="total-count" id="totalG">0</span>
+                    <span class="total-label">Guilherme</span>
+                </div>
+                <div class="total-item e">
+                    <span class="total-count" id="totalE">0</span>
+                    <span class="total-label">Empates</span>
+                </div>
+                <div class="total-item l">
+                    <span class="total-count" id="totalL">0</span>
+                    <span class="total-label">Luana</span>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:var(--color-g)"></div>
+                    Guilherme venceu
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:var(--color-l)"></div>
+                    Luana venceu
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#d97706"></div>
+                    Empate
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#1e1e3a"></div>
+                    Sem dados
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey:            "AIzaSyBqeUSV1CAY216gI5HzaVtHA8ncpt4FoYM",
+            authDomain:        "apostaluana-551f2.firebaseapp.com",
+            databaseURL:       "https://apostaluana-551f2-default-rtdb.firebaseio.com",
+            projectId:         "apostaluana-551f2",
+            storageBucket:     "apostaluana-551f2.firebasestorage.app",
+            messagingSenderId: "749165322076",
+            appId:             "1:749165322076:web:ebefaac6f0afff47f22b99"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const today = new Date();
+        let viewYear  = today.getFullYear();
+        let viewMonth = today.getMonth();
+
+        let historyData = {};
+
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        function todayStr() {
+            return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+        }
+
+        function renderCalendar() {
+            const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
+
+            document.getElementById('monthTitle').textContent =
+                new Date(viewYear, viewMonth, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+            document.getElementById('btnNext').disabled = isCurrentMonth;
+
+            const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+            const daysInMonth  = new Date(viewYear, viewMonth + 1, 0).getDate();
+            const todayDate    = todayStr();
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            let countG = 0, countL = 0, countE = 0;
+
+            // Células vazias antes do dia 1
+            for (let i = 0; i < firstWeekday; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell empty';
+                grid.appendChild(cell);
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`;
+                const result  = historyData[dateStr];
+                const isFuture = dateStr > todayDate;
+                const isToday  = dateStr === todayDate;
+
+                const cell = document.createElement('div');
+                cell.textContent = d;
+
+                if (isFuture) {
+                    cell.className = 'day-cell future';
+                } else if (result === 'guilherme') {
+                    cell.className = 'day-cell guilherme';
+                    cell.title = 'Guilherme venceu';
+                    countG++;
+                } else if (result === 'luana') {
+                    cell.className = 'day-cell luana';
+                    cell.title = 'Luana venceu';
+                    countL++;
+                } else if (result === 'empate') {
+                    cell.className = 'day-cell empate';
+                    cell.title = 'Empate';
+                    countE++;
+                } else {
+                    cell.className = 'day-cell no-data';
+                    cell.title = 'Sem dados';
+                }
+
+                if (isToday) cell.classList.add('today');
+                grid.appendChild(cell);
+            }
+
+            document.getElementById('totalG').textContent = countG;
+            document.getElementById('totalL').textContent = countL;
+            document.getElementById('totalE').textContent = countE;
+        }
+
+        function changeMonth(delta) {
+            viewMonth += delta;
+            if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
+            if (viewMonth > 11) { viewMonth = 0;  viewYear++; }
+
+            // Não navega para meses futuros
+            if (viewYear > today.getFullYear() ||
+               (viewYear === today.getFullYear() && viewMonth > today.getMonth())) {
+                viewYear  = today.getFullYear();
+                viewMonth = today.getMonth();
+            }
+
+            renderCalendar();
+        }
+
+        db.ref('aposta/history').on('value', snapshot => {
+            historyData = snapshot.val() || {};
+            renderCalendar();
+        });
+    </script>
+</body>
+</html>

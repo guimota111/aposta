@@ -30,12 +30,32 @@ body {
 
 /* ── Header ── */
 .header {
+    position: relative;
     text-align: center;
     padding: 2rem 1rem;
     background: linear-gradient(135deg, #13132a 0%, #1a1a35 100%);
     border-radius: 16px;
     border: 1px solid var(--border);
     margin-bottom: 1rem;
+}
+
+.btn-history {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--bg-task);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.btn-history:hover {
+    color: var(--text);
+    border-color: #555;
 }
 
 .title {

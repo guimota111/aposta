@@ -115,10 +115,12 @@ function checkAndAwardPoints(data) {
             guilherme: fbPoints.guilherme || 0,
             luana:     fbPoints.luana     || 0
         };
-        if (gPct > lPct)      newPoints.guilherme++;
-        else if (lPct > gPct) newPoints.luana++;
+        let dayResult = 'empate';
+        if (gPct > lPct)      { newPoints.guilherme++; dayResult = 'guilherme'; }
+        else if (lPct > gPct) { newPoints.luana++;     dayResult = 'luana';     }
 
         ROOT.update({
+            [`history/${oldDate}`]: dayResult,
             state: {
                 guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null },
                 luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null }
