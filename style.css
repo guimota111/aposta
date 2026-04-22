@@ -348,76 +348,72 @@ body {
     50%       { box-shadow: 0 0 18px 4px rgba(255,215,0,0.25); }
 }
 
-/* ── Footer ── */
-.footer { text-align: center; padding: 2rem 0 1rem; }
+/* ── Responsive / Mobile-first ── */
+@media (max-width: 768px) {
+    .app { padding: 0.75rem 0.6rem 1.5rem; }
 
-.btn-reset {
-    padding: 0.7rem 2rem;
-    background: rgba(239, 68, 68, 0.1);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-.btn-reset:hover { background: rgba(239, 68, 68, 0.2); }
+    .header { padding: 1.1rem 3.75rem 1rem 1rem; }
+    .title  { font-size: 1.35rem; }
+    .date   { font-size: 0.8rem; }
 
-/* ── Modal ── */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-    backdrop-filter: blur(4px);
-}
+    .btn-history { font-size: 0.75rem; padding: 0.3rem 0.6rem; top: 0.75rem; right: 0.75rem; }
 
-.modal {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    max-width: 340px;
-    width: 90%;
-}
+    .scoreboard-card {
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.8rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .sb-pts  { font-size: 1.75rem; }
+    .sb-name { font-size: 0.85rem; }
 
-.modal h3 { font-size: 1.2rem; margin-bottom: 0.6rem; }
-.modal p  { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .competitors { grid-template-columns: 1fr; gap: 0; }
 
-.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .vs-badge {
+        padding: 0.6rem 0;
+        font-size: 0.75rem;
+        letter-spacing: 3px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-muted);
+    }
+    .vs-badge::before,
+    .vs-badge::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
 
-.btn-cancel {
-    padding: 0.55rem 1.1rem;
-    background: var(--border);
-    color: var(--text-muted);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-.btn-cancel:hover { background: #3a3a5c; }
+    .competitor-card { padding: 1rem; border-radius: 12px; }
+    .competitor-header { margin-bottom: 0.9rem; padding-bottom: 0.75rem; gap: 0.6rem; }
 
-.btn-confirm {
-    padding: 0.55rem 1.1rem;
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-.btn-confirm:hover { filter: brightness(1.2); }
+    .avatar          { width: 40px; height: 40px; font-size: 1.1rem; }
+    .competitor-name { font-size: 1.05rem; }
+    .overall-score   { font-size: 1.25rem; }
 
-/* ── Responsive ── */
-@media (max-width: 720px) {
-    .competitors { grid-template-columns: 1fr; }
-    .vs-badge { padding-top: 0; font-size: 1.1rem; }
-    .title { font-size: 1.5rem; }
-    .scoreboard-card { flex-direction: column; gap: 0.75rem; }
+    .task        { padding: 0.7rem 0.75rem; margin-bottom: 0.6rem; }
+    .task-info   { margin-bottom: 0.45rem; }
+    .task-label  { font-size: 0.9rem; }
+    .task-fraction { font-size: 0.78rem; }
+
+    .progress-track { margin-bottom: 0.55rem; }
+
+    /* Botões com área de toque confortável */
+    .btn-sub, .btn-add, .btn-gym, .btn-timer {
+        min-height: 44px;
+        font-size: 0.88rem;
+        border-radius: 9px;
+    }
+
+    .btn-sub  { padding: 0 0.85rem; }
+    .btn-add  { padding: 0 0.85rem; flex: 1; }
+    .btn-timer { padding: 0 1rem; }
+    .btn-gym  { padding: 0 1rem; }
+
+    .task-actions     { gap: 0.4rem; }
+    .water-btns .btn-sub { flex: 0 0 auto; }
+
+    .winner-banner { font-size: 1rem; padding: 0.85rem 1rem; margin-top: 1.25rem; }
 }

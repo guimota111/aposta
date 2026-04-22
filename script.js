@@ -28,7 +28,8 @@ const state = {
     luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null }
 };
 
-let points = { guilherme: 0, luana: 0 };
+let points          = { guilherme: 0, luana: 0 };
+let lastFirebaseData = null;
 
 function todayStr() {
     return new Date().toISOString().split('T')[0];
@@ -148,6 +149,7 @@ function startListening() {
             return;
         }
 
+        lastFirebaseData = data;
         checkAndAwardPoints(data);
 
         ['guilherme', 'luana'].forEach(p => {
@@ -275,26 +277,13 @@ function render() {
     }
 }
 
-// Atualiza o display do timer a cada segundo sem escrever no Firebase
-setInterval(render, 1000);
-
-// ── Modal ─────────────────────────────────────────────────
-function confirmReset() { document.getElementById('resetModal').style.display = 'flex'; }
-function closeModal()    { document.getElementById('resetModal').style.display = 'none'; }
-function closeModalOutside(e) {
-    if (e.target === document.getElementById('resetModal')) closeModal();
-}
-
-function resetDay() {
-    ROOT.update({
-        date:  todayStr(),
-        state: {
-            guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null },
-            luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null }
-        }
-    });
-    closeModal();
-}
+// Atualiza display do timer e verifica virada de dia a cada segundo
+setInterval(() => {
+    if (lastFirebaseData && lastFirebaseData.date !== todayStr()) {
+        checkAndAwardPoints(lastFirebaseData);
+    }
+    render();
+}, 1000);
 
 // ── Init ──────────────────────────────────────────────────
 startListening();
