@@ -13,6 +13,18 @@
             <p class="date" id="currentDate"></p>
         </header>
 
+        <!-- Placar geral -->
+        <div class="scoreboard-card">
+            <span class="sb-label">🏆 Placar</span>
+            <div class="sb-scores">
+                <span class="sb-name g-color">Guilherme</span>
+                <span class="sb-pts g-color" id="g-points">0</span>
+                <span class="sb-sep">×</span>
+                <span class="sb-pts l-color" id="l-points">0</span>
+                <span class="sb-name l-color">Luana</span>
+            </div>
+        </div>
+
         <main class="main">
             <div class="competitors">
 
@@ -20,8 +32,13 @@
                 <div class="competitor-card" id="guilherme-card">
                     <div class="competitor-header">
                         <div class="avatar g-avatar">G</div>
-                        <h2 class="competitor-name">Guilherme</h2>
-                        <div class="overall-score" id="g-overall">0%</div>
+                        <div class="header-center">
+                            <h2 class="competitor-name">Guilherme</h2>
+                            <div class="overall-track">
+                                <div class="overall-fill" id="g-overall-bar"></div>
+                            </div>
+                        </div>
+                        <div class="overall-score g-color" id="g-overall">0%</div>
                     </div>
 
                     <div class="tasks">
@@ -46,7 +63,7 @@
                             <div class="task-info">
                                 <span class="task-icon">📚</span>
                                 <span class="task-label">Estudo</span>
-                                <span class="task-fraction" id="g-study-display">0:00 / 1:00h</span>
+                                <span class="task-fraction" id="g-study-display">0:00 / 2:00h</span>
                             </div>
                             <div class="progress-track">
                                 <div class="progress-fill" id="g-study-bar"></div>
@@ -72,6 +89,21 @@
                                 <button class="btn-add" onclick="updateWater('guilherme', 500)">+500ml</button>
                             </div>
                         </div>
+
+                        <!-- Academia -->
+                        <div class="task" id="g-gym-task">
+                            <div class="task-info">
+                                <span class="task-icon">🏋️</span>
+                                <span class="task-label">Academia</span>
+                                <span class="task-fraction" id="g-gym-status">Não fui</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="g-gym-bar"></div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn-gym" id="g-gym-btn" onclick="toggleGym('guilherme')">Marcar como feito</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -81,8 +113,13 @@
                 <div class="competitor-card" id="luana-card">
                     <div class="competitor-header">
                         <div class="avatar l-avatar">L</div>
-                        <h2 class="competitor-name">Luana</h2>
-                        <div class="overall-score" id="l-overall">0%</div>
+                        <div class="header-center">
+                            <h2 class="competitor-name">Luana</h2>
+                            <div class="overall-track">
+                                <div class="overall-fill" id="l-overall-bar"></div>
+                            </div>
+                        </div>
+                        <div class="overall-score l-color" id="l-overall">0%</div>
                     </div>
 
                     <div class="tasks">
@@ -107,7 +144,7 @@
                             <div class="task-info">
                                 <span class="task-icon">📚</span>
                                 <span class="task-label">Estudo</span>
-                                <span class="task-fraction" id="l-study-display">0:00 / 1:00h</span>
+                                <span class="task-fraction" id="l-study-display">0:00 / 2:00h</span>
                             </div>
                             <div class="progress-track">
                                 <div class="progress-fill" id="l-study-bar"></div>
@@ -122,7 +159,7 @@
                             <div class="task-info">
                                 <span class="task-icon">💧</span>
                                 <span class="task-label">Água</span>
-                                <span class="task-fraction"><span id="l-water-display">0</span> / 2L</span>
+                                <span class="task-fraction"><span id="l-water-display">0</span> / 2.5L</span>
                             </div>
                             <div class="progress-track">
                                 <div class="progress-fill" id="l-water-bar"></div>
@@ -131,6 +168,21 @@
                                 <button class="btn-sub" onclick="updateWater('luana', -250)">−</button>
                                 <button class="btn-add" onclick="updateWater('luana', 250)">+250ml</button>
                                 <button class="btn-add" onclick="updateWater('luana', 500)">+500ml</button>
+                            </div>
+                        </div>
+
+                        <!-- Academia -->
+                        <div class="task" id="l-gym-task">
+                            <div class="task-info">
+                                <span class="task-icon">🏋️</span>
+                                <span class="task-label">Academia</span>
+                                <span class="task-fraction" id="l-gym-status">Não fui</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="l-gym-bar"></div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn-gym" id="l-gym-btn" onclick="toggleGym('luana')">Marcar como feito</button>
                             </div>
                         </div>
                     </div>
@@ -148,7 +200,6 @@
         </footer>
     </div>
 
-    <!-- Modal de confirmação -->
     <div class="modal-overlay" id="resetModal" style="display:none" onclick="closeModalOutside(event)">
         <div class="modal">
             <h3>Novo Dia</h3>

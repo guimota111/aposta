@@ -35,7 +35,7 @@ body {
     background: linear-gradient(135deg, #13132a 0%, #1a1a35 100%);
     border-radius: 16px;
     border: 1px solid var(--border);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .title {
@@ -54,6 +54,39 @@ body {
     text-transform: capitalize;
 }
 
+/* ── Scoreboard ── */
+.scoreboard-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.sb-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: gold;
+    letter-spacing: 1px;
+}
+
+.sb-scores {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sb-name { font-size: 0.9rem; font-weight: 600; }
+.sb-pts  { font-size: 2rem; font-weight: 900; line-height: 1; }
+.sb-sep  { font-size: 1.5rem; font-weight: 700; color: var(--text-muted); }
+
+.g-color { color: var(--color-g-light); }
+.l-color { color: var(--color-l-light); }
+
 /* ── Layout ── */
 .competitors {
     display: grid;
@@ -63,7 +96,7 @@ body {
 }
 
 .vs-badge {
-    padding-top: 3.5rem;
+    padding-top: 4rem;
     font-size: 1.4rem;
     font-weight: 900;
     color: var(--text-muted);
@@ -110,21 +143,39 @@ body {
 .g-avatar { background: linear-gradient(135deg, #7c3aed, #4f46e5); }
 .l-avatar { background: linear-gradient(135deg, #ec4899, #f43f5e); }
 
-.competitor-name {
+.header-center {
     flex: 1;
-    font-size: 1.25rem;
-    font-weight: 700;
+    min-width: 0;
 }
+
+.competitor-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.overall-track {
+    height: 8px;
+    background: #2d2d4e;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.overall-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+#guilherme-card .overall-fill { background: linear-gradient(90deg, #7c3aed, #818cf8); }
+#luana-card    .overall-fill  { background: linear-gradient(90deg, #ec4899, #f43f5e); }
 
 .overall-score {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    color: var(--text-muted);
-    transition: color 0.3s;
+    flex-shrink: 0;
 }
-
-#guilherme-card .overall-score { color: var(--color-g-light); }
-#luana-card .overall-score    { color: var(--color-l-light); }
 
 /* ── Tasks ── */
 .task {
@@ -148,20 +199,9 @@ body {
     margin-bottom: 0.55rem;
 }
 
-.task-icon { font-size: 1.05rem; }
-
-.task-label {
-    flex: 1;
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.task-fraction {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    white-space: nowrap;
-}
+.task-icon     { font-size: 1.05rem; }
+.task-label    { flex: 1; font-weight: 600; font-size: 0.95rem; }
+.task-fraction { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
 
 /* ── Progress bar ── */
 .progress-track {
@@ -180,7 +220,7 @@ body {
 }
 
 #guilherme-card .progress-fill { background: linear-gradient(90deg, #7c3aed, #4f46e5); }
-#luana-card    .progress-fill { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+#luana-card    .progress-fill  { background: linear-gradient(90deg, #ec4899, #f43f5e); }
 
 .task.completed .progress-fill {
     background: linear-gradient(90deg, #10b981, #059669) !important;
@@ -194,8 +234,7 @@ body {
     flex-wrap: wrap;
 }
 
-.btn-sub,
-.btn-add {
+.btn-sub, .btn-add, .btn-gym {
     padding: 0.38rem 0.8rem;
     border-radius: 8px;
     border: 1px solid transparent;
@@ -210,25 +249,34 @@ body {
     color: var(--text-muted);
     border-color: var(--border);
 }
+.btn-sub:hover { background: #3a3a5c; color: var(--text); }
 
-.btn-sub:hover  { background: #3a3a5c; color: var(--text); }
-.btn-add:hover  { filter: brightness(1.25); }
-.btn-sub:active,
-.btn-add:active { transform: scale(0.93); }
+.btn-add:hover, .btn-gym:hover { filter: brightness(1.25); }
+.btn-sub:active, .btn-add:active, .btn-gym:active { transform: scale(0.93); }
 
-#guilherme-card .btn-add {
+#guilherme-card .btn-add,
+#guilherme-card .btn-gym {
     background: rgba(124, 58, 237, 0.18);
     color: var(--color-g-light);
     border-color: rgba(124, 58, 237, 0.35);
 }
 
-#luana-card .btn-add {
+#luana-card .btn-add,
+#luana-card .btn-gym {
     background: rgba(236, 72, 153, 0.18);
     color: var(--color-l-light);
     border-color: rgba(236, 72, 153, 0.35);
 }
 
-/* Timer button */
+.btn-gym { width: 100%; }
+
+.btn-gym.gym-done {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Timer */
 .btn-timer {
     width: 100%;
     padding: 0.5rem 1rem;
@@ -258,7 +306,7 @@ body {
     border-color: rgba(239, 68, 68, 0.35) !important;
 }
 
-.btn-timer:hover  { filter: brightness(1.2); }
+.btn-timer:hover    { filter: brightness(1.2); }
 .btn-timer:disabled { opacity: 0.6; cursor: default; }
 
 /* ── Winner banner ── */
@@ -281,10 +329,7 @@ body {
 }
 
 /* ── Footer ── */
-.footer {
-    text-align: center;
-    padding: 2rem 0 1rem;
-}
+.footer { text-align: center; padding: 2rem 0 1rem; }
 
 .btn-reset {
     padding: 0.7rem 2rem;
@@ -297,7 +342,6 @@ body {
     font-weight: 600;
     transition: background 0.2s;
 }
-
 .btn-reset:hover { background: rgba(239, 68, 68, 0.2); }
 
 /* ── Modal ── */
@@ -324,11 +368,7 @@ body {
 .modal h3 { font-size: 1.2rem; margin-bottom: 0.6rem; }
 .modal p  { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
 
-.modal-actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: flex-end;
-}
+.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
 
 .btn-cancel {
     padding: 0.55rem 1.1rem;
@@ -339,7 +379,6 @@ body {
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: background 0.15s;
 }
 .btn-cancel:hover { background: #3a3a5c; }
 
@@ -352,18 +391,13 @@ body {
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: filter 0.15s;
 }
 .btn-confirm:hover { filter: brightness(1.2); }
 
 /* ── Responsive ── */
 @media (max-width: 720px) {
-    .competitors {
-        grid-template-columns: 1fr;
-    }
-    .vs-badge {
-        padding-top: 0;
-        font-size: 1.1rem;
-    }
+    .competitors { grid-template-columns: 1fr; }
+    .vs-badge { padding-top: 0; font-size: 1.1rem; }
     .title { font-size: 1.5rem; }
+    .scoreboard-card { flex-direction: column; gap: 0.75rem; }
 }
