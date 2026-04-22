@@ -2,13 +2,14 @@
 // Preencha com as credenciais do seu projeto Firebase:
 // Console → Project Settings → Your apps → SDK setup and configuration
 const firebaseConfig = {
-    apiKey:            "YOUR_API_KEY",
-    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId:         "YOUR_PROJECT_ID",
-    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId:             "YOUR_APP_ID"
+    apiKey:            "AIzaSyBqeUSV1CAY216gI5HzaVtHA8ncpt4FoYM",
+    authDomain:        "apostaluana-551f2.firebaseapp.com",
+    databaseURL:       "https://apostaluana-551f2-default-rtdb.firebaseio.com",
+    projectId:         "apostaluana-551f2",
+    storageBucket:     "apostaluana-551f2.firebasestorage.app",
+    messagingSenderId: "749165322076",
+    appId:             "1:749165322076:web:ebefaac6f0afff47f22b99",
+    measurementId:     "G-WFGPT03Z1X"
 };
 
 firebase.initializeApp(firebaseConfig);
