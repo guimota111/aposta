@@ -432,24 +432,24 @@
 
                 if (isFuture) {
                     cell.className = 'day-cell future';
-                } else if (result === 'guilherme') {
-                    cell.className = 'day-cell guilherme';
-                    cell.title = 'Guilherme venceu';
-                    cell.onclick = () => openEditModal(dateStr, dayData);
-                    countG++;
-                } else if (result === 'luana') {
-                    cell.className = 'day-cell luana';
-                    cell.title = 'Luana venceu';
-                    cell.onclick = () => openEditModal(dateStr, dayData);
-                    countL++;
-                } else if (result === 'empate') {
-                    cell.className = 'day-cell empate';
-                    cell.title = 'Empate';
-                    cell.onclick = () => openEditModal(dateStr, dayData);
-                    countE++;
                 } else {
-                    cell.className = 'day-cell no-data';
-                    cell.title = 'Sem dados';
+                    if (result === 'guilherme') {
+                        cell.className = 'day-cell guilherme';
+                        cell.title = 'Guilherme venceu';
+                        countG++;
+                    } else if (result === 'luana') {
+                        cell.className = 'day-cell luana';
+                        cell.title = 'Luana venceu';
+                        countL++;
+                    } else if (result === 'empate') {
+                        cell.className = 'day-cell empate';
+                        cell.title = 'Empate';
+                        countE++;
+                    } else {
+                        cell.className = 'day-cell no-data';
+                        cell.title = 'Sem dados / Clique para editar';
+                    }
+                    cell.onclick = () => openEditModal(dateStr, dayData || {});
                 }
 
                 if (isToday) cell.classList.add('today');
@@ -482,7 +482,8 @@
             const title = document.getElementById('editTitle');
             const content = document.getElementById('editContent');
 
-            title.textContent = `Editar ${new Date(dateStr).toLocaleDateString('pt-BR')}`;
+            const [y, m, d] = dateStr.split('-');
+            title.textContent = `Editar ${d}/${m}/${y}`;
 
             const state = dayData.state || { guilherme: {}, luana: {} };
             content.innerHTML = generateEditHTML(state);
@@ -595,7 +596,23 @@
                 let newResult = 'empate';
                 if (gPct > lPct) newResult = 'guilherme';
                 else if (lPct > gPct) newResult = 'luana';
-                ref.update({ result: newResult });
+                
+                ref.update({ result: newResult }).then(() => {
+                    recalculateGlobalPoints();
+                });
+            });
+        }
+
+        function recalculateGlobalPoints() {
+            db.ref('aposta/history').once('value', snapshot => {
+                const history = snapshot.val() || {};
+                let gPoints = 0;
+                let lPoints = 0;
+                for (const date in history) {
+                    if (history[date].result === 'guilherme') gPoints++;
+                    else if (history[date].result === 'luana') lPoints++;
+                }
+                db.ref('aposta/points').update({ guilherme: gPoints, luana: lPoints });
             });
         }
 
