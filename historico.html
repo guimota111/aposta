@@ -423,7 +423,7 @@
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`;
                 const dayData = historyData[dateStr];
-                const result  = dayData ? dayData.result : null;
+                const result  = (typeof dayData === 'string') ? dayData : (dayData ? dayData.result : null);
                 const isFuture = dateStr > todayDate;
                 const isToday  = dateStr === todayDate;
 
@@ -486,7 +486,7 @@
             title.textContent = `Editar ${d}/${m}/${y}`;
 
             const dayData = historyData[dateStr] || {};
-            const state = dayData.state || { guilherme: {}, luana: {} };
+            const state = (typeof dayData === 'object' && dayData.state) ? dayData.state : { guilherme: {}, luana: {} };
             content.innerHTML = generateEditHTML(state);
             modal.style.display = 'flex';
         }
@@ -570,20 +570,33 @@
 
         function updateHistory(person, field, delta) {
             if (!currentEditDate) return;
-            const ref = db.ref(`aposta/history/${currentEditDate}/state/${person}`);
-            ref.once('value', snapshot => {
-                const current = snapshot.val() || {};
-                const newValue = Math.max(0, (current[field] || 0) + delta);
-                ref.update({ [field]: newValue }).then(() => recalculateResult(currentEditDate));
+            const rootRef = db.ref(`aposta/history/${currentEditDate}`);
+            rootRef.once('value', snapshot => {
+                let dayData = snapshot.val();
+                if (typeof dayData !== 'object' || dayData === null) {
+                    dayData = { result: typeof dayData === 'string' ? dayData : 'empate', state: { guilherme: {}, luana: {} } };
+                }
+                if (!dayData.state) dayData.state = { guilherme: {}, luana: {} };
+                if (!dayData.state[person]) dayData.state[person] = {};
+                
+                dayData.state[person][field] = Math.max(0, (dayData.state[person][field] || 0) + delta);
+                rootRef.set(dayData).then(() => recalculateResult(currentEditDate));
             });
         }
 
         function toggleHistory(person, field) {
             if (!currentEditDate) return;
-            const ref = db.ref(`aposta/history/${currentEditDate}/state/${person}`);
-            ref.once('value', snapshot => {
-                const current = snapshot.val() || {};
-                ref.update({ [field]: !current[field] }).then(() => recalculateResult(currentEditDate));
+            const rootRef = db.ref(`aposta/history/${currentEditDate}`);
+            rootRef.once('value', snapshot => {
+                let dayData = snapshot.val();
+                if (typeof dayData !== 'object' || dayData === null) {
+                    dayData = { result: typeof dayData === 'string' ? dayData : 'empate', state: { guilherme: {}, luana: {} } };
+                }
+                if (!dayData.state) dayData.state = { guilherme: {}, luana: {} };
+                if (!dayData.state[person]) dayData.state[person] = {};
+                
+                dayData.state[person][field] = !dayData.state[person][field];
+                rootRef.set(dayData).then(() => recalculateResult(currentEditDate));
             });
         }
 
