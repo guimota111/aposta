@@ -24,8 +24,8 @@ const GOALS = {
 
 // Espelho local do estado Firebase (atualizado pelo listener)
 const state = {
-    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null },
-    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null }
+    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null },
+    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null }
 };
 
 let points          = { guilherme: 0, luana: 0 };
@@ -57,7 +57,8 @@ function calcPct(s, g) {
     const st  = Math.min(effStudy             / g.studySeconds, 1);
     const w   = Math.min((s.water    || 0) / g.water,          1);
     const gym = (s.gym || false) ? 1 : 0;
-    return Math.round(((q + st + w + gym) / 4) * 100);
+    const aerobic = (s.aerobic || false) ? 1 : 0;
+    return Math.round(((q + st + w + gym + aerobic) / 5) * 100);
 }
 
 function overallPct(person) {
@@ -91,6 +92,10 @@ function updateStudy(person, seconds) {
 
 function toggleGym(person) {
     fbUpdate(person, { gym: !state[person].gym });
+}
+
+function toggleAerobic(person) {
+    fbUpdate(person, { aerobic: !state[person].aerobic });
 }
 
 function toggleTimer(person) {
@@ -136,8 +141,8 @@ function checkAndAwardPoints(data) {
         ROOT.update({
             [`history/${oldDate}`]: dayResult,
             state: {
-                guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null },
-                luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null }
+                guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null },
+                luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null }
             },
             points: newPoints
         });
@@ -257,6 +262,15 @@ function render() {
         const gymBtn = document.getElementById(`${p}-gym-btn`);
         gymBtn.textContent = gymDone ? 'Desfazer' : 'Marcar como feito';
         gymBtn.classList.toggle('gym-done', gymDone);
+
+        // Exercício Aeróbico
+        const aerobicDone = !!s.aerobic;
+        document.getElementById(`${p}-aerobic-status`).textContent = aerobicDone ? 'Fiz! ✅' : 'Não fiz';
+        document.getElementById(`${p}-aerobic-bar`).style.width    = aerobicDone ? '100%' : '0%';
+        document.getElementById(`${p}-aerobic-task`).classList.toggle('completed', aerobicDone);
+        const aerobicBtn = document.getElementById(`${p}-aerobic-btn`);
+        aerobicBtn.textContent = aerobicDone ? 'Desfazer' : 'Marcar como feito';
+        aerobicBtn.classList.toggle('gym-done', aerobicDone);
 
         // Score geral
         const overall = overallPct(person);
