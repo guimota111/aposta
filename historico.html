@@ -449,7 +449,7 @@
                         cell.className = 'day-cell no-data';
                         cell.title = 'Sem dados / Clique para editar';
                     }
-                    cell.onclick = () => openEditModal(dateStr, dayData || {});
+                    cell.onclick = () => openEditModal(dateStr);
                 }
 
                 if (isToday) cell.classList.add('today');
@@ -476,7 +476,7 @@
             renderCalendar();
         }
 
-        function openEditModal(dateStr, dayData) {
+        function openEditModal(dateStr) {
             currentEditDate = dateStr;
             const modal = document.getElementById('editModal');
             const title = document.getElementById('editTitle');
@@ -485,6 +485,7 @@
             const [y, m, d] = dateStr.split('-');
             title.textContent = `Editar ${d}/${m}/${y}`;
 
+            const dayData = historyData[dateStr] || {};
             const state = dayData.state || { guilherme: {}, luana: {} };
             content.innerHTML = generateEditHTML(state);
             modal.style.display = 'flex';
