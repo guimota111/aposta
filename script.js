@@ -139,7 +139,7 @@ function checkAndAwardPoints(data) {
         else if (lPct > gPct) { newPoints.luana++;     dayResult = 'luana';     }
 
         ROOT.update({
-            [`history/${oldDate}`]: dayResult,
+            [`history/${oldDate}`]: { result: dayResult, state: fbState },
             state: {
                 guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null },
                 luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null }

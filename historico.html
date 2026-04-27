@@ -190,6 +190,104 @@
         .total-item.g .total-count { color: var(--color-g-light); }
         .total-item.l .total-count { color: var(--color-l-light); }
         .total-item.e .total-count { color: #fbbf24; }
+
+        /* ── Modal de edição ── */
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .edit-modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .edit-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .btn-close:hover { color: var(--text); }
+
+        /* ── Estilos do modal de edição ── */
+        .competitors {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .competitor-card {
+            background: var(--bg-task);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .competitor-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        .tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+
+        .task span {
+            flex: 1;
+        }
+
+        .task button {
+            background: var(--color-g);
+            border: none;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .task button:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -254,6 +352,19 @@
             </div>
         </div>
 
+        <!-- Modal de edição -->
+        <div id="editModal" class="edit-modal" style="display:none">
+            <div class="edit-modal-content">
+                <div class="edit-header">
+                    <h2 id="editTitle">Editar Dia</h2>
+                    <button class="btn-close" onclick="closeEditModal()">×</button>
+                </div>
+                <div id="editContent">
+                    <!-- Conteúdo será preenchido dinamicamente -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -277,6 +388,7 @@
         let viewMonth = today.getMonth();
 
         let historyData = {};
+        let currentEditDate = null;
 
         function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -310,7 +422,8 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`;
-                const result  = historyData[dateStr];
+                const dayData = historyData[dateStr];
+                const result  = dayData ? dayData.result : null;
                 const isFuture = dateStr > todayDate;
                 const isToday  = dateStr === todayDate;
 
@@ -322,14 +435,17 @@
                 } else if (result === 'guilherme') {
                     cell.className = 'day-cell guilherme';
                     cell.title = 'Guilherme venceu';
+                    cell.onclick = () => openEditModal(dateStr, dayData);
                     countG++;
                 } else if (result === 'luana') {
                     cell.className = 'day-cell luana';
                     cell.title = 'Luana venceu';
+                    cell.onclick = () => openEditModal(dateStr, dayData);
                     countL++;
                 } else if (result === 'empate') {
                     cell.className = 'day-cell empate';
                     cell.title = 'Empate';
+                    cell.onclick = () => openEditModal(dateStr, dayData);
                     countE++;
                 } else {
                     cell.className = 'day-cell no-data';
@@ -360,9 +476,151 @@
             renderCalendar();
         }
 
+        function openEditModal(dateStr, dayData) {
+            currentEditDate = dateStr;
+            const modal = document.getElementById('editModal');
+            const title = document.getElementById('editTitle');
+            const content = document.getElementById('editContent');
+
+            title.textContent = `Editar ${new Date(dateStr).toLocaleDateString('pt-BR')}`;
+
+            const state = dayData.state || { guilherme: {}, luana: {} };
+            content.innerHTML = generateEditHTML(state);
+            modal.style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditDate = null;
+        }
+
+        function generateEditHTML(state) {
+            const g = state.guilherme || {};
+            const l = state.luana || {};
+
+            return `
+                <div class="competitors">
+                    <div class="competitor-card">
+                        <h3>Guilherme</h3>
+                        <div class="tasks">
+                            <div class="task">
+                                <span>Questões: ${g.questions || 0}/20</span>
+                                <button onclick="updateHistory('guilherme', 'questions', -1)">−</button>
+                                <button onclick="updateHistory('guilherme', 'questions', 1)">+</button>
+                            </div>
+                            <div class="task">
+                                <span>Estudo: ${fmtTime(g.studySeconds || 0)} / 2:00h</span>
+                                <button onclick="updateHistory('guilherme', 'studySeconds', -600)">−10min</button>
+                                <button onclick="updateHistory('guilherme', 'studySeconds', 600)">+10min</button>
+                            </div>
+                            <div class="task">
+                                <span>Água: ${g.water || 0} / 4000ml</span>
+                                <button onclick="updateHistory('guilherme', 'water', -250)">−</button>
+                                <button onclick="updateHistory('guilherme', 'water', 250)">+250ml</button>
+                            </div>
+                            <div class="task">
+                                <span>Academia: ${g.gym ? 'Feito' : 'Não'}</span>
+                                <button onclick="toggleHistory('guilherme', 'gym')">Alternar</button>
+                            </div>
+                            <div class="task">
+                                <span>Aeróbico: ${g.aerobic ? 'Feito' : 'Não'}</span>
+                                <button onclick="toggleHistory('guilherme', 'aerobic')">Alternar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="competitor-card">
+                        <h3>Luana</h3>
+                        <div class="tasks">
+                            <div class="task">
+                                <span>Questões: ${l.questions || 0}/20</span>
+                                <button onclick="updateHistory('luana', 'questions', -1)">−</button>
+                                <button onclick="updateHistory('luana', 'questions', 1)">+</button>
+                            </div>
+                            <div class="task">
+                                <span>Estudo: ${fmtTime(l.studySeconds || 0)} / 2:00h</span>
+                                <button onclick="updateHistory('luana', 'studySeconds', -600)">−10min</button>
+                                <button onclick="updateHistory('luana', 'studySeconds', 600)">+10min</button>
+                            </div>
+                            <div class="task">
+                                <span>Água: ${l.water || 0} / 2500ml</span>
+                                <button onclick="updateHistory('luana', 'water', -250)">−</button>
+                                <button onclick="updateHistory('luana', 'water', 250)">+250ml</button>
+                            </div>
+                            <div class="task">
+                                <span>Academia: ${l.gym ? 'Feito' : 'Não'}</span>
+                                <button onclick="toggleHistory('luana', 'gym')">Alternar</button>
+                            </div>
+                            <div class="task">
+                                <span>Aeróbico: ${l.aerobic ? 'Feito' : 'Não'}</span>
+                                <button onclick="toggleHistory('luana', 'aerobic')">Alternar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function fmtTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return `${h}:${String(m).padStart(2, '0')}`;
+        }
+
+        function updateHistory(person, field, delta) {
+            if (!currentEditDate) return;
+            const ref = db.ref(`aposta/history/${currentEditDate}/state/${person}`);
+            ref.once('value', snapshot => {
+                const current = snapshot.val() || {};
+                const newValue = Math.max(0, (current[field] || 0) + delta);
+                ref.update({ [field]: newValue }).then(() => recalculateResult(currentEditDate));
+            });
+        }
+
+        function toggleHistory(person, field) {
+            if (!currentEditDate) return;
+            const ref = db.ref(`aposta/history/${currentEditDate}/state/${person}`);
+            ref.once('value', snapshot => {
+                const current = snapshot.val() || {};
+                ref.update({ [field]: !current[field] }).then(() => recalculateResult(currentEditDate));
+            });
+        }
+
+        function recalculateResult(dateStr) {
+            const ref = db.ref(`aposta/history/${dateStr}`);
+            ref.once('value', snapshot => {
+                const data = snapshot.val();
+                if (!data || !data.state) return;
+                const gPct = calcPct(data.state.guilherme || {}, { questions: 20, studySeconds: 7200, water: 4000 });
+                const lPct = calcPct(data.state.luana || {}, { questions: 20, studySeconds: 7200, water: 2500 });
+                let newResult = 'empate';
+                if (gPct > lPct) newResult = 'guilherme';
+                else if (lPct > gPct) newResult = 'luana';
+                ref.update({ result: newResult });
+            });
+        }
+
+        // Função calcPct copiada do script.js
+        function calcPct(s, g) {
+            const effStudy = (s.timerRunning && s.timerStartedAt)
+                ? (s.studySeconds || 0) + Math.floor((Date.now() - s.timerStartedAt) / 1000)
+                : (s.studySeconds || 0);
+            const q   = Math.min((s.questions || 0) / g.questions,    1);
+            const st  = Math.min(effStudy             / g.studySeconds, 1);
+            const w   = Math.min((s.water    || 0) / g.water,          1);
+            const gym = (s.gym || false) ? 1 : 0;
+            const aerobic = (s.aerobic || false) ? 1 : 0;
+            return Math.round(((q + st + w + gym + aerobic) / 5) * 100);
+        }
+
         db.ref('aposta/history').on('value', snapshot => {
             historyData = snapshot.val() || {};
             renderCalendar();
+            if (currentEditDate && historyData[currentEditDate]) {
+                // Atualizar o modal se estiver aberto
+                const dayData = historyData[currentEditDate];
+                const content = document.getElementById('editContent');
+                content.innerHTML = generateEditHTML(dayData.state || {});
+            }
         });
     </script>
 </body>
