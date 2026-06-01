@@ -122,6 +122,23 @@
                                 <button class="btn-gym" id="g-aerobic-btn" onclick="toggleAerobic('guilherme')">Marcar como feito</button>
                             </div>
                         </div>
+
+                        <!-- Leitura de livro -->
+                        <div class="task" id="g-book-task">
+                            <div class="task-info">
+                                <span class="task-icon">📖</span>
+                                <span class="task-label">Leitura de livro</span>
+                                <span class="task-fraction"><span id="g-book-count">0</span>/10 pág</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="g-book-bar"></div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn-sub" onclick="updateBookPages('guilherme', -1)">−</button>
+                                <button class="btn-add" onclick="updateBookPages('guilherme', 1)">+1</button>
+                                <button class="btn-add" onclick="updateBookPages('guilherme', 5)">+5</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -218,6 +235,23 @@
                             </div>
                             <div class="task-actions">
                                 <button class="btn-gym" id="l-aerobic-btn" onclick="toggleAerobic('luana')">Marcar como feito</button>
+                            </div>
+                        </div>
+
+                        <!-- Leitura de livro -->
+                        <div class="task" id="l-book-task">
+                            <div class="task-info">
+                                <span class="task-icon">📖</span>
+                                <span class="task-label">Leitura de livro</span>
+                                <span class="task-fraction"><span id="l-book-count">0</span>/10 pág</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="l-book-bar"></div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn-sub" onclick="updateBookPages('luana', -1)">−</button>
+                                <button class="btn-add" onclick="updateBookPages('luana', 1)">+1</button>
+                                <button class="btn-add" onclick="updateBookPages('luana', 5)">+5</button>
                             </div>
                         </div>
                     </div>
