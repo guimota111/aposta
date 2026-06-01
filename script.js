@@ -1,6 +1,4 @@
 // ── Firebase config ────────────────────────────────────────
-// Preencha com as credenciais do seu projeto Firebase:
-// Console → Project Settings → Your apps → SDK setup and configuration
 const firebaseConfig = {
     apiKey:            "AIzaSyBqeUSV1CAY216gI5HzaVtHA8ncpt4FoYM",
     authDomain:        "apostaluana-551f2.firebaseapp.com",
@@ -16,19 +14,22 @@ firebase.initializeApp(firebaseConfig);
 const db   = firebase.database();
 const ROOT = db.ref('aposta');
 
+// Temporada atual — ao mudar este valor, o placar é zerado automaticamente
+const CURRENT_SEASON = 'junho-julho-2026';
+
 // ── Metas ──────────────────────────────────────────────────
 const GOALS = {
-    guilherme: { questions: 20, studySeconds: 7200, water: 4000 },
-    luana:     { questions: 20, studySeconds: 7200, water: 2500 }
+    guilherme: { questions: 20, studySeconds: 7200, water: 4000, bookPages: 10 },
+    luana:     { questions: 20, studySeconds: 7200, water: 2500, bookPages: 10 }
 };
 
 // Espelho local do estado Firebase (atualizado pelo listener)
 const state = {
-    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null },
-    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null }
+    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null },
+    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null }
 };
 
-let points          = { guilherme: 0, luana: 0 };
+let points           = { guilherme: 0, luana: 0 };
 let lastFirebaseData = null;
 
 function todayStr() {
@@ -37,6 +38,11 @@ function todayStr() {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+}
+
+function isWeekend(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.getDay() === 0 || d.getDay() === 6;
 }
 
 // ── Segundos efetivos de estudo (inclui timer rodando) ─────
@@ -53,12 +59,13 @@ function calcPct(s, g) {
     const effStudy = (s.timerRunning && s.timerStartedAt)
         ? (s.studySeconds || 0) + Math.floor((Date.now() - s.timerStartedAt) / 1000)
         : (s.studySeconds || 0);
-    const q   = Math.min((s.questions || 0) / g.questions,    1);
-    const st  = Math.min(effStudy             / g.studySeconds, 1);
-    const w   = Math.min((s.water    || 0) / g.water,          1);
-    const gym = (s.gym || false) ? 1 : 0;
+    const q       = Math.min((s.questions  || 0) / g.questions,    1);
+    const st      = Math.min(effStudy             / g.studySeconds, 1);
+    const w       = Math.min((s.water      || 0) / g.water,        1);
+    const gym     = (s.gym     || false) ? 1 : 0;
     const aerobic = (s.aerobic || false) ? 1 : 0;
-    return Math.round(((q + st + w + gym + aerobic) / 5) * 100);
+    const book    = Math.min((s.bookPages  || 0) / g.bookPages,    1);
+    return Math.round(((q + st + w + gym + aerobic + book) / 6) * 100);
 }
 
 function overallPct(person) {
@@ -84,10 +91,14 @@ function updateWater(person, ml) {
 function updateStudy(person, seconds) {
     const s      = state[person];
     const newVal = Math.max(0, Math.min(GOALS[person].studySeconds, effectiveStudySeconds(person) + seconds));
-    // Se o timer estiver rodando, reseta timerStartedAt para evitar dupla contagem
     fbUpdate(person, s.timerRunning
         ? { studySeconds: newVal, timerStartedAt: Date.now() }
         : { studySeconds: newVal });
+}
+
+function updateBookPages(person, delta) {
+    const val = Math.max(0, Math.min(GOALS[person].bookPages, (state[person].bookPages || 0) + delta));
+    fbUpdate(person, { bookPages: val });
 }
 
 function toggleGym(person) {
@@ -101,7 +112,6 @@ function toggleAerobic(person) {
 function toggleTimer(person) {
     const s = state[person];
     if (s.timerRunning) {
-        // Pausa: salva os segundos acumulados
         const elapsed = s.timerStartedAt ? Math.floor((Date.now() - s.timerStartedAt) / 1000) : 0;
         const total   = Math.min((s.studySeconds || 0) + elapsed, GOALS[person].studySeconds);
         fbUpdate(person, { timerRunning: false, timerStartedAt: null, studySeconds: total });
@@ -111,9 +121,13 @@ function toggleTimer(person) {
     }
 }
 
+// ── Reset de estado diário ─────────────────────────────────
+const EMPTY_STATE = {
+    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null },
+    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null }
+};
+
 // ── Virada de dia e pontuação ──────────────────────────────
-// Usa transaction no campo 'date' para garantir que apenas UM browser
-// contabilize o vencedor e resete o estado (evita corrida entre browsers).
 function checkAndAwardPoints(data) {
     if (!data.date || data.date === todayStr()) return;
 
@@ -122,29 +136,49 @@ function checkAndAwardPoints(data) {
     const fbPoints = data.points || { guilherme: 0, luana: 0 };
 
     ROOT.child('date').transaction(currentDate => {
-        if (currentDate !== oldDate) return undefined; // já foi tratado
+        if (currentDate !== oldDate) return undefined;
         return todayStr();
     }, (error, committed) => {
         if (error || !committed) return;
-
-        const gPct = calcPct(fbState.guilherme || {}, GOALS.guilherme);
-        const lPct = calcPct(fbState.luana     || {}, GOALS.luana);
 
         const newPoints = {
             guilherme: fbPoints.guilherme || 0,
             luana:     fbPoints.luana     || 0
         };
+
         let dayResult = 'empate';
-        if (gPct > lPct)      { newPoints.guilherme++; dayResult = 'guilherme'; }
-        else if (lPct > gPct) { newPoints.luana++;     dayResult = 'luana';     }
+
+        // Finais de semana não pontuam
+        if (!isWeekend(oldDate)) {
+            const gPct = calcPct(fbState.guilherme || {}, GOALS.guilherme);
+            const lPct = calcPct(fbState.luana     || {}, GOALS.luana);
+            if (gPct > lPct)      { newPoints.guilherme++; dayResult = 'guilherme'; }
+            else if (lPct > gPct) { newPoints.luana++;     dayResult = 'luana';     }
+        } else {
+            dayResult = 'fds';
+        }
 
         ROOT.update({
             [`history/${oldDate}`]: { result: dayResult, state: fbState },
-            state: {
-                guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null },
-                luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, timerRunning: false, timerStartedAt: null }
-            },
-            points: newPoints
+            state:   EMPTY_STATE,
+            points:  newPoints
+        });
+    });
+}
+
+// ── Troca de temporada (zera placar) ──────────────────────
+function checkSeason(data) {
+    if (data.season === CURRENT_SEASON) return;
+
+    ROOT.child('season').transaction(currentSeason => {
+        if (currentSeason === CURRENT_SEASON) return undefined;
+        return CURRENT_SEASON;
+    }, (error, committed) => {
+        if (error || !committed) return;
+        ROOT.update({
+            points: { guilherme: 0, luana: 0 },
+            state:  EMPTY_STATE,
+            date:   todayStr()
         });
     });
 }
@@ -155,19 +189,18 @@ function startListening() {
         const data = snapshot.val();
 
         if (!data) {
-            // Primeira vez: inicializa o banco
             ROOT.set({
-                date:  todayStr(),
-                state: {
-                    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null },
-                    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, timerRunning: false, timerStartedAt: null }
-                },
+                season: CURRENT_SEASON,
+                date:   todayStr(),
+                state:  EMPTY_STATE,
                 points: { guilherme: 0, luana: 0 }
             });
             return;
         }
 
         lastFirebaseData = data;
+
+        checkSeason(data);
         checkAndAwardPoints(data);
 
         ['guilherme', 'luana'].forEach(p => {
@@ -213,7 +246,6 @@ function render() {
         const g        = GOALS[person];
         const effStudy = Math.min(effectiveStudySeconds(person), g.studySeconds);
 
-        // Auto-para o timer quando bate a meta (qualquer browser detecta)
         if (s.timerRunning && effStudy >= g.studySeconds) {
             state[person].timerRunning   = false;
             state[person].timerStartedAt = null;
@@ -271,6 +303,13 @@ function render() {
         const aerobicBtn = document.getElementById(`${p}-aerobic-btn`);
         aerobicBtn.textContent = aerobicDone ? 'Desfazer' : 'Marcar como feito';
         aerobicBtn.classList.toggle('gym-done', aerobicDone);
+
+        // Leitura de livro
+        const bookDone = (s.bookPages || 0) >= g.bookPages;
+        const bPct = Math.min(((s.bookPages || 0) / g.bookPages) * 100, 100);
+        document.getElementById(`${p}-book-count`).textContent  = s.bookPages || 0;
+        document.getElementById(`${p}-book-bar`).style.width    = `${bPct}%`;
+        document.getElementById(`${p}-book-task`).classList.toggle('completed', bookDone);
 
         // Score geral
         const overall = overallPct(person);
