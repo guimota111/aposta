@@ -130,6 +130,7 @@
         .day-cell.guilherme { background: var(--color-g); color: #fff; }
         .day-cell.luana     { background: var(--color-l); color: #fff; }
         .day-cell.empate    { background: #d97706; color: #fff; }
+        .day-cell.fds       { background: #232342; color: #6b6b95; }
 
         .day-cell.today {
             outline: 2px solid var(--text-muted);
@@ -190,6 +191,39 @@
         .total-item.g .total-count { color: var(--color-g-light); }
         .total-item.l .total-count { color: var(--color-l-light); }
         .total-item.e .total-count { color: #fbbf24; }
+
+        /* ── Placar da temporada ── */
+        .season-totals {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border);
+            text-align: center;
+        }
+
+        .season-totals-title {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+        }
+
+        .season-line {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .season-line .g-color { color: var(--color-g-light); }
+        .season-line .l-color { color: var(--color-l-light); }
+        .season-line .sep     { color: var(--text-muted); margin: 0 0.4rem; }
+
+        .season-empates {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
 
         /* ── Modal de edição ── */
         .edit-modal {
@@ -332,6 +366,16 @@
                 </div>
             </div>
 
+            <div class="season-totals">
+                <span class="season-totals-title">🔥 Placar da temporada</span>
+                <span class="season-line">
+                    <span class="g-color" id="seasonG">0</span>
+                    <span class="sep">×</span>
+                    <span class="l-color" id="seasonL">0</span>
+                </span>
+                <span class="season-empates"><span id="seasonE">0</span> empate(s)</span>
+            </div>
+
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-dot" style="background:var(--color-g)"></div>
@@ -344,6 +388,10 @@
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#d97706"></div>
                     Empate
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#232342"></div>
+                    Fim de semana
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#1e1e3a"></div>
@@ -369,19 +417,9 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="config.js"></script>
     <script>
-        const firebaseConfig = {
-            apiKey:            "AIzaSyBqeUSV1CAY216gI5HzaVtHA8ncpt4FoYM",
-            authDomain:        "apostaluana-551f2.firebaseapp.com",
-            databaseURL:       "https://apostaluana-551f2-default-rtdb.firebaseio.com",
-            projectId:         "apostaluana-551f2",
-            storageBucket:     "apostaluana-551f2.firebasestorage.app",
-            messagingSenderId: "749165322076",
-            appId:             "1:749165322076:web:ebefaac6f0afff47f22b99"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // Firebase (db/ROOT), metas, temporada e calcPct vêm de config.js
 
         const today = new Date();
         let viewYear  = today.getFullYear();
@@ -389,12 +427,6 @@
 
         let historyData = {};
         let currentEditDate = null;
-
-        function pad(n) { return String(n).padStart(2, '0'); }
-
-        function todayStr() {
-            return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-        }
 
         function renderCalendar() {
             const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
@@ -421,11 +453,11 @@
             }
 
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`;
-                const dayData = historyData[dateStr];
-                const result  = (typeof dayData === 'string') ? dayData : (dayData ? dayData.result : null);
+                const dateStr = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`;
+                const result  = resultOf(historyData[dateStr]);
                 const isFuture = dateStr > todayDate;
                 const isToday  = dateStr === todayDate;
+                const counts   = isInSeason(dateStr);
 
                 const cell = document.createElement('div');
                 cell.textContent = d;
@@ -433,22 +465,26 @@
                 if (isFuture) {
                     cell.className = 'day-cell future';
                 } else {
-                    if (result === 'guilherme') {
+                    if (isWeekend(dateStr) || result === 'fds') {
+                        cell.className = 'day-cell fds';
+                        cell.title = 'Fim de semana — não pontua';
+                    } else if (result === 'guilherme') {
                         cell.className = 'day-cell guilherme';
                         cell.title = 'Guilherme venceu';
-                        countG++;
+                        if (counts) countG++;
                     } else if (result === 'luana') {
                         cell.className = 'day-cell luana';
                         cell.title = 'Luana venceu';
-                        countL++;
+                        if (counts) countL++;
                     } else if (result === 'empate') {
                         cell.className = 'day-cell empate';
                         cell.title = 'Empate';
-                        countE++;
+                        if (counts) countE++;
                     } else {
                         cell.className = 'day-cell no-data';
                         cell.title = 'Sem dados / Clique para editar';
                     }
+                    if (!counts) cell.title += ' (fora da temporada)';
                     cell.onclick = () => openEditModal(dateStr);
                 }
 
@@ -459,6 +495,16 @@
             document.getElementById('totalG').textContent = countG;
             document.getElementById('totalL').textContent = countL;
             document.getElementById('totalE').textContent = countE;
+
+            renderSeasonTotals();
+        }
+
+        // Placar da temporada, derivado do mesmo histórico dos quadradinhos
+        function renderSeasonTotals() {
+            const t = countSeasonPoints(historyData);
+            document.getElementById('seasonG').textContent = t.guilherme;
+            document.getElementById('seasonL').textContent = t.luana;
+            document.getElementById('seasonE').textContent = t.empate;
         }
 
         function changeMonth(delta) {
@@ -487,7 +533,7 @@
 
             const dayData = historyData[dateStr] || {};
             const state = (typeof dayData === 'object' && dayData.state) ? dayData.state : { guilherme: {}, luana: {} };
-            content.innerHTML = generateEditHTML(state);
+            content.innerHTML = generateEditHTML(dateStr, state);
             modal.style.display = 'flex';
         }
 
@@ -496,17 +542,25 @@
             currentEditDate = null;
         }
 
-        function generateEditHTML(state) {
+        function generateEditHTML(dateStr, state) {
             const g = state.guilherme || {};
             const l = state.luana || {};
 
+            const notes = [];
+            if (isWeekend(dateStr)) notes.push('Fim de semana — este dia não pontua.');
+            if (!isInSeason(dateStr)) notes.push('Fora da temporada atual — não conta para o placar.');
+            const note = notes.length
+                ? `<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 0.75rem">${notes.join(' ')}</p>`
+                : '';
+
             return `
+                ${note}
                 <div class="competitors">
                     <div class="competitor-card">
                         <h3>Guilherme</h3>
                         <div class="tasks">
                             <div class="task">
-                                <span>Questões: ${g.questions || 0}/20</span>
+                                <span>Questões: ${g.questions || 0}/${GOALS.guilherme.questions}</span>
                                 <button onclick="updateHistory('guilherme', 'questions', -1)">−</button>
                                 <button onclick="updateHistory('guilherme', 'questions', 1)">+</button>
                             </div>
@@ -516,7 +570,7 @@
                                 <button onclick="updateHistory('guilherme', 'studySeconds', 600)">+10min</button>
                             </div>
                             <div class="task">
-                                <span>Água: ${g.water || 0} / 4000ml</span>
+                                <span>Água: ${g.water || 0} / ${GOALS.guilherme.water}ml</span>
                                 <button onclick="updateHistory('guilherme', 'water', -250)">−</button>
                                 <button onclick="updateHistory('guilherme', 'water', 250)">+250ml</button>
                             </div>
@@ -528,13 +582,18 @@
                                 <span>Aeróbico: ${g.aerobic ? 'Feito' : 'Não'}</span>
                                 <button onclick="toggleHistory('guilherme', 'aerobic')">Alternar</button>
                             </div>
+                            <div class="task">
+                                <span>Livro: ${g.bookPages || 0}/${GOALS.guilherme.bookPages} pág.</span>
+                                <button onclick="updateHistory('guilherme', 'bookPages', -1)">−</button>
+                                <button onclick="updateHistory('guilherme', 'bookPages', 1)">+</button>
+                            </div>
                         </div>
                     </div>
                     <div class="competitor-card">
                         <h3>Luana</h3>
                         <div class="tasks">
                             <div class="task">
-                                <span>Questões: ${l.questions || 0}/20</span>
+                                <span>Questões: ${l.questions || 0}/${GOALS.luana.questions}</span>
                                 <button onclick="updateHistory('luana', 'questions', -1)">−</button>
                                 <button onclick="updateHistory('luana', 'questions', 1)">+</button>
                             </div>
@@ -544,7 +603,7 @@
                                 <button onclick="updateHistory('luana', 'studySeconds', 600)">+10min</button>
                             </div>
                             <div class="task">
-                                <span>Água: ${l.water || 0} / 2500ml</span>
+                                <span>Água: ${l.water || 0} / ${GOALS.luana.water}ml</span>
                                 <button onclick="updateHistory('luana', 'water', -250)">−</button>
                                 <button onclick="updateHistory('luana', 'water', 250)">+250ml</button>
                             </div>
@@ -555,6 +614,11 @@
                             <div class="task">
                                 <span>Aeróbico: ${l.aerobic ? 'Feito' : 'Não'}</span>
                                 <button onclick="toggleHistory('luana', 'aerobic')">Alternar</button>
+                            </div>
+                            <div class="task">
+                                <span>Livro: ${l.bookPages || 0}/${GOALS.luana.bookPages} pág.</span>
+                                <button onclick="updateHistory('luana', 'bookPages', -1)">−</button>
+                                <button onclick="updateHistory('luana', 'bookPages', 1)">+</button>
                             </div>
                         </div>
                     </div>
@@ -605,52 +669,44 @@
             ref.once('value', snapshot => {
                 const data = snapshot.val();
                 if (!data || !data.state) return;
-                const gPct = calcPct(data.state.guilherme || {}, { questions: 20, studySeconds: 7200, water: 4000 });
-                const lPct = calcPct(data.state.luana || {}, { questions: 20, studySeconds: 7200, water: 2500 });
-                let newResult = 'empate';
-                if (gPct > lPct) newResult = 'guilherme';
-                else if (lPct > gPct) newResult = 'luana';
-                
-                ref.update({ result: newResult }).then(() => {
+                // Mesmas metas e mesmo cálculo (6 critérios) usados na página principal
+                ref.update({ result: dayWinner(dateStr, data.state) }).then(() => {
                     recalculateGlobalPoints();
                 });
             });
         }
 
+        // Reescreve o placar a partir do histórico da TEMPORADA atual.
         function recalculateGlobalPoints() {
             db.ref('aposta/history').once('value', snapshot => {
-                const history = snapshot.val() || {};
-                let gPoints = 0;
-                let lPoints = 0;
-                for (const date in history) {
-                    if (history[date].result === 'guilherme') gPoints++;
-                    else if (history[date].result === 'luana') lPoints++;
-                }
-                db.ref('aposta/points').update({ guilherme: gPoints, luana: lPoints });
+                const history = snapshot.val();
+                if (!history) return;   // nunca zera o placar por histórico vazio
+                const t = countSeasonPoints(history);
+                db.ref('aposta/points').update({ guilherme: t.guilherme, luana: t.luana });
             });
         }
 
-        // Função calcPct copiada do script.js
-        function calcPct(s, g) {
-            const effStudy = (s.timerRunning && s.timerStartedAt)
-                ? (s.studySeconds || 0) + Math.floor((Date.now() - s.timerStartedAt) / 1000)
-                : (s.studySeconds || 0);
-            const q   = Math.min((s.questions || 0) / g.questions,    1);
-            const st  = Math.min(effStudy             / g.studySeconds, 1);
-            const w   = Math.min((s.water    || 0) / g.water,          1);
-            const gym = (s.gym || false) ? 1 : 0;
-            const aerobic = (s.aerobic || false) ? 1 : 0;
-            return Math.round(((q + st + w + gym + aerobic) / 5) * 100);
+        // Se o placar salvo divergir do histórico da temporada, corrige sozinho.
+        function syncPointsWithHistory() {
+            if (!historyData || Object.keys(historyData).length === 0) return;
+            const t = countSeasonPoints(historyData);
+            db.ref('aposta/points').once('value', snap => {
+                const p = snap.val() || {};
+                if ((p.guilherme || 0) !== t.guilherme || (p.luana || 0) !== t.luana) {
+                    db.ref('aposta/points').update({ guilherme: t.guilherme, luana: t.luana });
+                }
+            });
         }
 
         db.ref('aposta/history').on('value', snapshot => {
             historyData = snapshot.val() || {};
             renderCalendar();
+            syncPointsWithHistory();
             if (currentEditDate && historyData[currentEditDate]) {
                 // Atualizar o modal se estiver aberto
                 const dayData = historyData[currentEditDate];
                 const content = document.getElementById('editContent');
-                content.innerHTML = generateEditHTML(dayData.state || {});
+                content.innerHTML = generateEditHTML(currentEditDate, dayData.state || {});
             }
         });
     </script>
