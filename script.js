@@ -1,27 +1,5 @@
-// ── Firebase config ────────────────────────────────────────
-const firebaseConfig = {
-    apiKey:            "AIzaSyBqeUSV1CAY216gI5HzaVtHA8ncpt4FoYM",
-    authDomain:        "apostaluana-551f2.firebaseapp.com",
-    databaseURL:       "https://apostaluana-551f2-default-rtdb.firebaseio.com",
-    projectId:         "apostaluana-551f2",
-    storageBucket:     "apostaluana-551f2.firebasestorage.app",
-    messagingSenderId: "749165322076",
-    appId:             "1:749165322076:web:ebefaac6f0afff47f22b99",
-    measurementId:     "G-WFGPT03Z1X"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db   = firebase.database();
-const ROOT = db.ref('aposta');
-
-// Temporada atual — ao mudar este valor, o placar é zerado automaticamente
-const CURRENT_SEASON = 'junho-julho-2026';
-
-// ── Metas ──────────────────────────────────────────────────
-const GOALS = {
-    guilherme: { questions: 20, studySeconds: 7200, water: 4000, bookPages: 10 },
-    luana:     { questions: 20, studySeconds: 7200, water: 2500, bookPages: 10 }
-};
+// Firebase, temporada, metas e regras de pontuação vivem em config.js
+// (carregado antes deste arquivo).
 
 // Espelho local do estado Firebase (atualizado pelo listener)
 const state = {
@@ -32,19 +10,6 @@ const state = {
 let points           = { guilherme: 0, luana: 0 };
 let lastFirebaseData = null;
 
-function todayStr() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
-
-function isWeekend(dateStr) {
-    const d = new Date(dateStr + 'T12:00:00');
-    return d.getDay() === 0 || d.getDay() === 6;
-}
-
 // ── Segundos efetivos de estudo (inclui timer rodando) ─────
 function effectiveStudySeconds(person) {
     const s = state[person];
@@ -52,20 +17,6 @@ function effectiveStudySeconds(person) {
         return s.studySeconds + Math.floor((Date.now() - s.timerStartedAt) / 1000);
     }
     return s.studySeconds || 0;
-}
-
-// ── Cálculo de porcentagem ─────────────────────────────────
-function calcPct(s, g) {
-    const effStudy = (s.timerRunning && s.timerStartedAt)
-        ? (s.studySeconds || 0) + Math.floor((Date.now() - s.timerStartedAt) / 1000)
-        : (s.studySeconds || 0);
-    const q       = Math.min((s.questions  || 0) / g.questions,    1);
-    const st      = Math.min(effStudy             / g.studySeconds, 1);
-    const w       = Math.min((s.water      || 0) / g.water,        1);
-    const gym     = (s.gym     || false) ? 1 : 0;
-    const aerobic = (s.aerobic || false) ? 1 : 0;
-    const book    = Math.min((s.bookPages  || 0) / g.bookPages,    1);
-    return Math.round(((q + st + w + gym + aerobic + book) / 6) * 100);
 }
 
 function overallPct(person) {
@@ -121,12 +72,6 @@ function toggleTimer(person) {
     }
 }
 
-// ── Reset de estado diário ─────────────────────────────────
-const EMPTY_STATE = {
-    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null },
-    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null }
-};
-
 // ── Virada de dia e pontuação ──────────────────────────────
 function checkAndAwardPoints(data) {
     if (!data.date || data.date === todayStr()) return;
@@ -146,16 +91,13 @@ function checkAndAwardPoints(data) {
             luana:     fbPoints.luana     || 0
         };
 
-        let dayResult = 'empate';
+        // Finais de semana não pontuam (dayWinner devolve 'fds')
+        const dayResult = dayWinner(oldDate, fbState);
 
-        // Finais de semana não pontuam
-        if (!isWeekend(oldDate)) {
-            const gPct = calcPct(fbState.guilherme || {}, GOALS.guilherme);
-            const lPct = calcPct(fbState.luana     || {}, GOALS.luana);
-            if (gPct > lPct)      { newPoints.guilherme++; dayResult = 'guilherme'; }
-            else if (lPct > gPct) { newPoints.luana++;     dayResult = 'luana';     }
-        } else {
-            dayResult = 'fds';
+        // Só pontua dentro da temporada atual
+        if (isInSeason(oldDate)) {
+            if (dayResult === 'guilherme')  newPoints.guilherme++;
+            else if (dayResult === 'luana') newPoints.luana++;
         }
 
         ROOT.update({
