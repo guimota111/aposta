@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opções – Competição Diária</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page">
+
+        <div class="page-header">
+            <h1>⚙️ Opções</h1>
+        </div>
+
+        <nav class="top-nav page-nav">
+            <a href="index.html" class="nav-link">⚔️ Hoje</a>
+            <a href="historico.html" class="nav-link">📅 Histórico</a>
+            <a href="pontuacao.html" class="nav-link">🏅 Pontuação</a>
+            <a href="opcoes.html" class="nav-link active">⚙️ Opções</a>
+        </nav>
+
+        <!-- Endpoints de passos -->
+        <div class="card">
+            <div class="card-title">👟 Endpoints de passos</div>
+            <p style="margin-bottom:1rem">
+                Cada endpoint <strong>substitui</strong> o número de passos do dia da pessoa.
+                Rodar o atalho várias vezes ao longo do dia só atualiza o valor — não soma nem duplica.
+                O método tem que ser <strong>PUT</strong> e o corpo, só o número (ex: <code>10432</code>).
+            </p>
+
+            <div class="endpoint">
+                <div class="endpoint-label g-color">🔵 Guilherme</div>
+                <div class="code-row">
+                    <div class="code" id="url-guilherme"></div>
+                    <button class="btn-copy" onclick="copiar('url-guilherme', this)">Copiar</button>
+                </div>
+                <p style="font-size:0.78rem;margin-top:0.4rem">
+                    Passos de hoje no site: <strong id="steps-guilherme">—</strong>
+                </p>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-label l-color">🔴 Luana</div>
+                <div class="code-row">
+                    <div class="code" id="url-luana"></div>
+                    <button class="btn-copy" onclick="copiar('url-luana', this)">Copiar</button>
+                </div>
+                <p style="font-size:0.78rem;margin-top:0.4rem">
+                    Passos de hoje no site: <strong id="steps-luana">—</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Como montar o atalho -->
+        <div class="card">
+            <div class="card-title">📱 Como montar o atalho no iPhone</div>
+            <ol class="steps-list">
+                <li>Abra o app <strong>Atalhos</strong> e crie um atalho novo.</li>
+                <li>Adicione a ação <strong>Encontrar Amostras de Saúde</strong>.
+                    Configure: <em>Tipo</em> = <code>Passos</code>, filtro <em>Data de início</em> = <code>é hoje</code>,
+                    e ative <strong>Calcular estatísticas</strong> com <em>Soma</em>.</li>
+                <li>Adicione a ação <strong>Obter Conteúdo da URL</strong> e cole ali a sua URL acima.</li>
+                <li>Toque em <strong>Mostrar mais</strong> nessa ação e ajuste:
+                    <em>Método</em> = <code>PUT</code>, <em>Corpo do pedido</em> = <code>Arquivo</code>,
+                    e arraste a variável do passo 2 para o campo.</li>
+                <li>Salve. Para rodar sozinho: aba <strong>Automação</strong> → <strong>Hora do Dia</strong>
+                    (ex.: 22h) → executar este atalho, com <em>Executar imediatamente</em> ligado.</li>
+            </ol>
+
+            <div class="note" style="margin-top:1rem">
+                <span>⏰</span>
+                <span>
+                    O atalho escreve sempre no <strong>dia que está aberto no site</strong>. O dia só vira quando
+                    alguém abre a página depois da meia-noite — então evite rodar o atalho de madrugada,
+                    senão os passos podem cair no dia anterior.
+                </span>
+            </div>
+        </div>
+
+        <!-- Teste rápido -->
+        <div class="card">
+            <div class="card-title">🧪 Testar pelo terminal</div>
+            <p style="margin-bottom:0.7rem">
+                Se quiser conferir antes de montar o atalho, isto grava 10.500 passos para o Guilherme:
+            </p>
+            <div class="code-row">
+                <div class="code" id="curl-cmd"></div>
+                <button class="btn-copy" onclick="copiar('curl-cmd', this)">Copiar</button>
+            </div>
+        </div>
+
+        <!-- Temporada -->
+        <div class="card">
+            <div class="card-title">🔥 Temporada atual</div>
+            <div class="table-wrap">
+                <table class="table">
+                    <tbody>
+                        <tr><td>Nome</td><td id="seasonName">—</td></tr>
+                        <tr><td>Início</td><td id="seasonStart">—</td></tr>
+                        <tr><td>Fim</td><td id="seasonEnd">—</td></tr>
+                        <tr><td>Dias úteis já disputados</td><td id="seasonDays">—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin-top:0.8rem">
+                Para começar uma nova temporada, altere <code>CURRENT_SEASON</code>, <code>SEASON_START</code>
+                e <code>SEASON_END</code> no arquivo <code>config.js</code>. O placar zera sozinho na primeira
+                vez que alguém abrir o site.
+            </p>
+        </div>
+
+        <!-- Aviso de segurança -->
+        <div class="card">
+            <div class="card-title">🔒 Sobre os endpoints</div>
+            <div class="note">
+                <span>⚠️</span>
+                <span>
+                    Essas URLs escrevem direto no banco, <strong>sem senha</strong> — é o mesmo acesso que o
+                    site já usa. Quem tiver o link consegue alterar os passos. Como o site inteiro já funciona
+                    assim, isso não abre nada novo, mas evite publicar essas URLs por aí.
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="config.js"></script>
+    <script>
+        function stepsEndpoint(person) {
+            return `${DB_URL}/aposta/state/${person}/steps.json`;
+        }
+
+        PEOPLE.forEach(p => {
+            document.getElementById(`url-${p}`).textContent = stepsEndpoint(p);
+        });
+
+        document.getElementById('curl-cmd').textContent =
+            `curl -X PUT -d '10500' \\\n  "${stepsEndpoint('guilherme')}"`;
+
+        function copiar(elId, btn) {
+            const texto = document.getElementById(elId).textContent;
+            navigator.clipboard.writeText(texto).then(() => {
+                const original = btn.textContent;
+                btn.textContent = '✓ Copiado';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.classList.remove('copied');
+                }, 1600);
+            }).catch(() => {
+                btn.textContent = 'Falhou';
+                setTimeout(() => { btn.textContent = 'Copiar'; }, 1600);
+            });
+        }
+
+        function fmtDate(d) {
+            const [y, m, day] = d.split('-');
+            return `${day}/${m}/${y}`;
+        }
+
+        document.getElementById('seasonName').textContent  = SEASON_LABEL;
+        document.getElementById('seasonStart').textContent = fmtDate(SEASON_START);
+        document.getElementById('seasonEnd').textContent   = fmtDate(SEASON_END);
+
+        ROOT.on('value', snapshot => {
+            const data = snapshot.val() || {};
+            PEOPLE.forEach(p => {
+                const s = (data.state && data.state[p]) || {};
+                document.getElementById(`steps-${p}`).textContent = (s.steps || 0).toLocaleString('pt-BR');
+            });
+            const season = computeSeason(data.history, data.state, data.date, todayStr());
+            document.getElementById('seasonDays').textContent = season.dates.length;
+        });
+    </script>
+</body>
+</html>

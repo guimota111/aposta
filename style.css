@@ -53,10 +53,18 @@ body {
     pointer-events: none;
 }
 
-.btn-history {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
+/* ── Navegação entre páginas ── */
+.top-nav {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 1rem;
+}
+
+.nav-link {
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.1);
     color: var(--text-muted);
@@ -66,12 +74,25 @@ body {
     text-decoration: none;
     transition: color 0.2s, background 0.2s, border-color 0.2s;
     backdrop-filter: blur(4px);
-    z-index: 1;
+    white-space: nowrap;
 }
-.btn-history:hover {
+.nav-link:hover {
     color: var(--text);
     background: rgba(255,255,255,.11);
     border-color: rgba(255,255,255,.2);
+}
+.nav-link.active {
+    color: #fdba74;
+    background: rgba(249,115,22,.14);
+    border-color: rgba(249,115,22,.35);
+}
+
+/* ── Ícone da garrafinha ── */
+.bottle-ico {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    flex-shrink: 0;
 }
 
 .season-badge {
@@ -117,9 +138,10 @@ body {
     padding: 1rem 1.5rem;
     margin-bottom: 1.5rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.5rem;
+    gap: 0.55rem;
     position: relative;
     overflow: hidden;
 }
@@ -143,12 +165,36 @@ body {
 .sb-scores {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    position: relative;
+    z-index: 1;
 }
 
-.sb-name { font-size: 0.9rem; font-weight: 600; }
-.sb-pts  { font-size: 2.1rem; font-weight: 900; line-height: 1; }
-.sb-sep  { font-size: 1.4rem; font-weight: 700; color: var(--text-muted); }
+.sb-side {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.sb-name   { font-size: 0.9rem; font-weight: 600; }
+.sb-pts    { font-size: 2.1rem; font-weight: 900; line-height: 1; }
+.sb-sep    { font-size: 1.4rem; font-weight: 700; color: var(--text-muted); }
+.sb-bottle { font-size: 1.9rem; }
+
+.sb-balance {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border);
+    width: 100%;
+}
+.sb-balance strong    { color: var(--text); font-weight: 700; }
+.sb-balance .bottle-ico { font-size: 1.05rem; }
 
 .g-color { color: var(--color-g-light); }
 .l-color { color: var(--color-l-light); }
@@ -266,8 +312,79 @@ body {
 }
 
 .task-icon     { font-size: 1.05rem; }
-.task-label    { flex: 1; font-weight: 600; font-size: 0.95rem; }
-.task-fraction { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+.task-label    { font-weight: 600; font-size: 0.95rem; }
+.task-fraction { margin-left: auto; font-size: 0.82rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+
+/* ── Foguinho de streak ── */
+.streak {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fdba74;
+    background: rgba(249,115,22,.12);
+    border: 1px solid rgba(249,115,22,.28);
+    border-radius: 99px;
+    padding: 0.1rem 0.42rem;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+
+.streak.streak-hot {
+    color: #fff;
+    background: linear-gradient(90deg, rgba(249,115,22,.55), rgba(251,113,133,.45));
+    border-color: rgba(249,115,22,.75);
+    box-shadow: 0 0 10px rgba(249,115,22,.35);
+}
+
+.streak.streak-risk {
+    color: var(--text-muted);
+    background: rgba(255,255,255,.04);
+    border-color: var(--border);
+    filter: grayscale(0.7);
+}
+
+/* ── Garrafinhas do dia (dentro do card) ── */
+.day-bottles {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    margin-bottom: 0.9rem;
+    padding: 0.55rem 0.75rem;
+    background: rgba(56,189,248,.06);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.day-bottles .db-total  { font-size: 0.95rem; color: var(--text); }
+.day-bottles .db-total strong { font-size: 1.15rem; font-weight: 900; }
+.day-bottles .db-detail { font-size: 0.74rem; color: var(--text-muted); }
+.day-bottles .db-muted  { font-size: 0.8rem; color: var(--text-muted); }
+.day-bottles .bottle-ico { font-size: 1.15rem; }
+
+/* ── Campo de passos ── */
+.steps-actions { align-items: stretch; }
+
+.steps-input {
+    flex: 1;
+    min-width: 0;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.38rem 0.7rem;
+    -moz-appearance: textfield;
+}
+.steps-input::-webkit-outer-spin-button,
+.steps-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.steps-input:focus {
+    outline: none;
+    border-color: rgba(56,189,248,.5);
+    background: rgba(255,255,255,.08);
+}
+#luana-card .steps-input:focus { border-color: rgba(251,113,133,.5); }
 
 /* ── Progress bar ── */
 .progress-track {
@@ -398,21 +515,32 @@ body {
 @media (max-width: 768px) {
     .app { padding: 0.75rem 0.6rem 1.5rem; }
 
-    .header { padding: 1.25rem 3.75rem 1rem 1rem; }
+    .header { padding: 1.25rem 1rem 1rem; }
     .title  { font-size: 1.4rem; }
     .date   { font-size: 0.8rem; }
     .season-badge { font-size: 0.65rem; padding: 0.2rem 0.6rem; }
 
-    .btn-history { font-size: 0.75rem; padding: 0.3rem 0.6rem; top: 0.75rem; right: 0.75rem; }
+    .top-nav  { margin-top: 0.85rem; gap: 0.35rem; }
+    .nav-link { font-size: 0.75rem; padding: 0.35rem 0.6rem; }
 
     .scoreboard-card {
-        flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.45rem;
         padding: 0.8rem 1rem;
         margin-bottom: 1rem;
     }
-    .sb-pts  { font-size: 1.8rem; }
-    .sb-name { font-size: 0.85rem; }
+    /* Empilha os dois lados em vez de deixar o "—" sobrando na quebra */
+    .sb-scores  { flex-direction: column; gap: 0.2rem; width: 100%; }
+    .sb-sep     { display: none; }
+    .sb-side    { width: 100%; max-width: 250px; }
+    .sb-side .sb-name { flex: 1; }
+    .sb-pts     { font-size: 1.8rem; }
+    .sb-name    { font-size: 0.85rem; }
+    .sb-bottle  { font-size: 1.6rem; }
+    .sb-balance { font-size: 0.8rem; }
+
+    .task-label { font-size: 0.88rem; }
+    .streak     { font-size: 0.68rem; padding: 0.08rem 0.35rem; }
+    .steps-input { min-height: 44px; }
 
     .competitors { grid-template-columns: 1fr; gap: 0; }
 
@@ -463,4 +591,254 @@ body {
     .water-btns .btn-sub { flex: 0 0 auto; }
 
     .winner-banner { font-size: 1rem; padding: 0.85rem 1rem; margin-top: 1.25rem; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Páginas internas (Pontuação / Opções / Histórico)
+   ══════════════════════════════════════════════════════════ */
+.page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.9rem;
+}
+
+.page-nav {
+    margin-top: 0;
+    margin-bottom: 1.35rem;
+    justify-content: flex-start;
+}
+
+.page-header h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fdba74;
+    margin-bottom: 0.9rem;
+}
+
+.card p        { font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); }
+.card p strong { color: var(--text); }
+.card p + p    { margin-top: 0.6rem; }
+
+/* Regra em destaque */
+.rule {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    background: var(--bg-task);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+.rule + .rule { margin-top: 0.6rem; }
+
+.rule-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #7dd3fc;
+    background: rgba(56,189,248,.1);
+    border: 1px solid rgba(56,189,248,.28);
+    border-radius: 9px;
+    padding: 0.3rem 0.5rem;
+    min-width: 58px;
+    justify-content: center;
+}
+.rule-badge .bottle-ico { font-size: 1.15rem; }
+
+.rule-text     { font-size: 0.9rem; line-height: 1.5; }
+.rule-text b   { color: var(--text); }
+.rule-text small { display: block; margin-top: 0.25rem; font-size: 0.78rem; color: var(--text-muted); }
+
+/* Tabela de streak / hábitos */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+.table th {
+    text-align: left;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+.table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(30,45,74,.5);
+    color: var(--text-muted);
+}
+.table td:first-child { color: var(--text); font-weight: 600; }
+.table tr:last-child td { border-bottom: none; }
+.table .num { color: #7dd3fc; font-weight: 800; white-space: nowrap; }
+.table .accum { color: #fdba74; font-weight: 700; white-space: nowrap; }
+.table-wrap { overflow-x: auto; }
+
+/* Exemplo de cálculo */
+.calc {
+    background: var(--bg-task);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: var(--text-muted);
+}
+.calc .line { display: flex; justify-content: space-between; gap: 1rem; }
+.calc .line span:last-child { color: #7dd3fc; font-weight: 700; white-space: nowrap; }
+.calc .total {
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 800;
+}
+.calc .total span:last-child { color: #fdba74; font-size: 1.05rem; }
+
+/* Aviso */
+.note {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    background: rgba(249,115,22,.07);
+    border: 1px solid rgba(249,115,22,.25);
+    border-radius: 11px;
+    padding: 0.75rem 0.85rem;
+}
+.note strong { color: #fdba74; }
+
+/* Bloco de código / endpoint */
+.endpoint { margin-bottom: 1.1rem; }
+.endpoint:last-child { margin-bottom: 0; }
+
+.endpoint-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+}
+
+.code-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.code {
+    flex: 1;
+    min-width: 0;
+    background: #060b16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem;
+    font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: #7dd3fc;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.btn-copy {
+    flex-shrink: 0;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.3);
+    color: var(--color-g-light);
+    border-radius: 10px;
+    padding: 0 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: filter 0.15s;
+}
+.btn-copy:hover  { filter: brightness(1.25); }
+.btn-copy.copied { background: rgba(52,211,153,.15); border-color: rgba(52,211,153,.4); color: #6ee7b7; }
+
+/* Passo a passo */
+.steps-list { list-style: none; counter-reset: step; }
+.steps-list li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.1rem;
+    font-size: 0.87rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 0.7rem;
+}
+.steps-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.05rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 7px;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.28);
+    color: var(--color-g-light);
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.steps-list li strong { color: var(--text); }
+.steps-list code {
+    background: #060b16;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.05rem 0.35rem;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 0.78rem;
+    color: #7dd3fc;
+}
+
+@media (max-width: 768px) {
+    .page          { padding: 1rem 0.75rem 2.5rem; }
+    .page-header h1 { font-size: 1.15rem; }
+    .card          { padding: 1rem; border-radius: 14px; }
+    .rule-badge    { min-width: 52px; font-size: 0.9rem; }
+    .rule-text     { font-size: 0.86rem; }
+    .code          { font-size: 0.68rem; }
+    .btn-copy      { min-height: 44px; }
 }

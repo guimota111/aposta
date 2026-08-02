@@ -1,22 +1,17 @@
-// Firebase, temporada, metas e regras de pontuação vivem em config.js
+// Firebase, temporada, metas e regras de garrafinhas vivem em config.js
 // (carregado antes deste arquivo).
 
 // Espelho local do estado Firebase (atualizado pelo listener)
 const state = {
-    guilherme: { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null },
-    luana:     { questions: 0, studySeconds: 0, water: 0, gym: false, aerobic: false, bookPages: 0, timerRunning: false, timerStartedAt: null }
+    guilherme: emptyPerson(),
+    luana:     emptyPerson()
 };
 
-let points           = { guilherme: 0, luana: 0 };
+let history          = {};
 let lastFirebaseData = null;
 
-// ── Segundos efetivos de estudo (inclui timer rodando) ─────
 function effectiveStudySeconds(person) {
-    const s = state[person];
-    if (s.timerRunning && s.timerStartedAt) {
-        return s.studySeconds + Math.floor((Date.now() - s.timerStartedAt) / 1000);
-    }
-    return s.studySeconds || 0;
+    return effStudySeconds(state[person]);
 }
 
 function overallPct(person) {
@@ -52,12 +47,20 @@ function updateBookPages(person, delta) {
     fbUpdate(person, { bookPages: val });
 }
 
-function toggleGym(person) {
-    fbUpdate(person, { gym: !state[person].gym });
+// Passos: valor absoluto do dia (mesma semântica do endpoint do atalho).
+// Não limita na meta — 14 mil passos aparecem como 14 mil.
+function saveSteps(person) {
+    const input = document.getElementById(`${PREFIX[person]}-steps-input`);
+    const raw   = (input.value || '').trim();
+    if (raw === '') return;
+    const val = Math.max(0, Math.round(Number(raw)));
+    if (!Number.isFinite(val)) return;
+    fbUpdate(person, { steps: val });
+    input.blur();
 }
 
-function toggleAerobic(person) {
-    fbUpdate(person, { aerobic: !state[person].aerobic });
+function toggleFlag(person, field) {
+    fbUpdate(person, { [field]: !state[person][field] });
 }
 
 function toggleTimer(person) {
@@ -72,13 +75,14 @@ function toggleTimer(person) {
     }
 }
 
-// ── Virada de dia e pontuação ──────────────────────────────
-function checkAndAwardPoints(data) {
+// ── Virada de dia ──────────────────────────────────────────
+// Fecha o dia anterior no histórico e zera o estado. As garrafinhas não são
+// gravadas: o placar é sempre recalculado a partir do histórico.
+function checkAndCloseDay(data) {
     if (!data.date || data.date === todayStr()) return;
 
-    const oldDate  = data.date;
-    const fbState  = data.state  || {};
-    const fbPoints = data.points || { guilherme: 0, luana: 0 };
+    const oldDate = data.date;
+    const fbState = data.state || {};
 
     ROOT.child('date').transaction(currentDate => {
         if (currentDate !== oldDate) return undefined;
@@ -86,24 +90,9 @@ function checkAndAwardPoints(data) {
     }, (error, committed) => {
         if (error || !committed) return;
 
-        const newPoints = {
-            guilherme: fbPoints.guilherme || 0,
-            luana:     fbPoints.luana     || 0
-        };
-
-        // Finais de semana não pontuam (dayWinner devolve 'fds')
-        const dayResult = dayWinner(oldDate, fbState);
-
-        // Só pontua dentro da temporada atual
-        if (isInSeason(oldDate)) {
-            if (dayResult === 'guilherme')  newPoints.guilherme++;
-            else if (dayResult === 'luana') newPoints.luana++;
-        }
-
         ROOT.update({
-            [`history/${oldDate}`]: { result: dayResult, state: fbState },
-            state:   EMPTY_STATE,
-            points:  newPoints
+            [`history/${oldDate}`]: { result: dayWinner(oldDate, fbState), state: fbState },
+            state: EMPTY_STATE
         });
     });
 }
@@ -117,10 +106,11 @@ function checkSeason(data) {
         return CURRENT_SEASON;
     }, (error, committed) => {
         if (error || !committed) return;
+        // O histórico antigo fica no banco, mas fora da janela da temporada
+        // não conta garrafinhas nem aparece no calendário.
         ROOT.update({
-            points: { guilherme: 0, luana: 0 },
-            state:  EMPTY_STATE,
-            date:   todayStr()
+            state: EMPTY_STATE,
+            date:  todayStr()
         });
     });
 }
@@ -134,8 +124,7 @@ function startListening() {
             ROOT.set({
                 season: CURRENT_SEASON,
                 date:   todayStr(),
-                state:  EMPTY_STATE,
-                points: { guilherme: 0, luana: 0 }
+                state:  EMPTY_STATE
             });
             return;
         }
@@ -143,15 +132,13 @@ function startListening() {
         lastFirebaseData = data;
 
         checkSeason(data);
-        checkAndAwardPoints(data);
+        checkAndCloseDay(data);
 
-        ['guilherme', 'luana'].forEach(p => {
-            if (data.state && data.state[p]) {
-                Object.assign(state[p], data.state[p]);
-            }
+        PEOPLE.forEach(p => {
+            if (data.state && data.state[p]) Object.assign(state[p], data.state[p]);
         });
 
-        if (data.points) points = data.points;
+        history = data.history || {};
 
         render();
     });
@@ -171,41 +158,80 @@ function fmtWater(ml) {
     return ml >= 1000 ? `${(ml / 1000).toFixed(1)}L` : `${ml}ml`;
 }
 
+function fmtNum(n) {
+    return (n || 0).toLocaleString('pt-BR');
+}
+
+function renderStreak(elId, info) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const count = info ? info.count : 0;
+    if (count < 2) {
+        el.style.display = 'none';
+        el.textContent   = '';
+        return;
+    }
+    el.style.display = '';
+    el.textContent   = `🔥 ${count}`;
+    el.classList.toggle('streak-hot',  count % BOTTLE_RULES.streakBlock === 0 && !info.atRisk);
+    el.classList.toggle('streak-risk', !!info.atRisk);
+    el.title = info.atRisk
+        ? `Streak de ${count} dias — ainda não fez hoje!`
+        : `${count} dias úteis seguidos`;
+}
+
 // ── Render ────────────────────────────────────────────────
 function render() {
+    const today = todayStr();
+
+    document.getElementById('seasonBadge').textContent = `🔥 ${SEASON_LABEL}`;
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    document.getElementById('g-points').textContent = points.guilherme || 0;
-    document.getElementById('l-points').textContent = points.luana     || 0;
+    // `state` pertence ao dia gravado no banco, que só vira quando
+    // checkAndCloseDay roda — pode estar um dia atrás por um instante.
+    const liveDate = (lastFirebaseData && lastFirebaseData.date) || today;
+    const season   = computeSeason(history, state, liveDate, today);
 
-    const prefix = { guilherme: 'g', luana: 'l' };
+    // ── Placar de garrafinhas ──
+    document.getElementById('g-bottles').textContent = season.totals.guilherme;
+    document.getElementById('l-bottles').textContent = season.totals.luana;
 
-    ['guilherme', 'luana'].forEach(person => {
-        const p        = prefix[person];
+    const bal     = balanceOf(season.totals);
+    const balEl   = document.getElementById('sbBalance');
+    if (bal.amount === 0) {
+        balEl.innerHTML = `Saldo: <strong>empatado</strong> — ninguém deve nada`;
+    } else {
+        const word = bal.amount === 1 ? 'garrafinha' : 'garrafinhas';
+        balEl.innerHTML = `Saldo: <strong>${NAMES[bal.debtor]}</strong> deve ` +
+            `<strong>${bal.amount}</strong> ${bottleIcon()} ${word} a <strong>${NAMES[bal.creditor]}</strong>`;
+    }
+
+    PEOPLE.forEach(person => {
+        const p        = PREFIX[person];
         const s        = state[person];
         const g        = GOALS[person];
         const effStudy = Math.min(effectiveStudySeconds(person), g.studySeconds);
 
         if (s.timerRunning && effStudy >= g.studySeconds) {
-            state[person].timerRunning   = false;
-            state[person].timerStartedAt = null;
-            state[person].studySeconds   = g.studySeconds;
+            s.timerRunning   = false;
+            s.timerStartedAt = null;
+            s.studySeconds   = g.studySeconds;
             fbUpdate(person, { timerRunning: false, timerStartedAt: null, studySeconds: g.studySeconds });
         }
 
         // Questões
-        const qPct = Math.min(((s.questions || 0) / g.questions) * 100, 100);
+        const qPct = habitPct('questions', s, g) * 100;
         document.getElementById(`${p}-questions-count`).textContent = s.questions || 0;
         document.getElementById(`${p}-questions-bar`).style.width   = `${qPct}%`;
-        document.getElementById(`${p}-questions-task`).classList.toggle('completed', (s.questions || 0) >= g.questions);
+        document.getElementById(`${p}-questions-task`).classList.toggle('completed', habitDone('questions', s, g));
 
         // Estudo
-        const sPct = Math.min((effStudy / g.studySeconds) * 100, 100);
+        const sPct = habitPct('studySeconds', s, g) * 100;
         document.getElementById(`${p}-study-display`).textContent = `${fmtTime(effStudy)} / 2:00h`;
         document.getElementById(`${p}-study-bar`).style.width     = `${sPct}%`;
-        document.getElementById(`${p}-study-task`).classList.toggle('completed', effStudy >= g.studySeconds);
+        document.getElementById(`${p}-study-task`).classList.toggle('completed', habitDone('studySeconds', s, g));
 
         const timerBtn = document.getElementById(`${p}-timer-btn`);
         if (effStudy >= g.studySeconds) {
@@ -223,10 +249,10 @@ function render() {
         }
 
         // Água
-        const wPct = Math.min(((s.water || 0) / g.water) * 100, 100);
+        const wPct = habitPct('water', s, g) * 100;
         document.getElementById(`${p}-water-display`).textContent = fmtWater(s.water || 0);
         document.getElementById(`${p}-water-bar`).style.width     = `${wPct}%`;
-        document.getElementById(`${p}-water-task`).classList.toggle('completed', (s.water || 0) >= g.water);
+        document.getElementById(`${p}-water-task`).classList.toggle('completed', habitDone('water', s, g));
 
         // Academia
         const gymDone = !!s.gym;
@@ -247,11 +273,49 @@ function render() {
         aerobicBtn.classList.toggle('gym-done', aerobicDone);
 
         // Leitura de livro
-        const bookDone = (s.bookPages || 0) >= g.bookPages;
-        const bPct = Math.min(((s.bookPages || 0) / g.bookPages) * 100, 100);
-        document.getElementById(`${p}-book-count`).textContent  = s.bookPages || 0;
-        document.getElementById(`${p}-book-bar`).style.width    = `${bPct}%`;
-        document.getElementById(`${p}-book-task`).classList.toggle('completed', bookDone);
+        const bPct = habitPct('bookPages', s, g) * 100;
+        document.getElementById(`${p}-book-count`).textContent = s.bookPages || 0;
+        document.getElementById(`${p}-book-bar`).style.width   = `${bPct}%`;
+        document.getElementById(`${p}-book-task`).classList.toggle('completed', habitDone('bookPages', s, g));
+
+        // Passos
+        const stepsDone = habitDone('steps', s, g);
+        const stPct     = habitPct('steps', s, g) * 100;
+        document.getElementById(`${p}-steps-display`).textContent = fmtNum(s.steps || 0);
+        document.getElementById(`${p}-steps-bar`).style.width     = `${stPct}%`;
+        document.getElementById(`${p}-steps-task`).classList.toggle('completed', stepsDone);
+        const stepsInput = document.getElementById(`${p}-steps-input`);
+        if (document.activeElement !== stepsInput) {
+            stepsInput.value = (s.steps || 0) > 0 ? s.steps : '';
+        }
+
+        // Meditação
+        const medDone = !!s.meditation;
+        document.getElementById(`${p}-meditation-status`).textContent = medDone ? 'Meditei! ✅' : 'Não meditei';
+        document.getElementById(`${p}-meditation-bar`).style.width    = medDone ? '100%' : '0%';
+        document.getElementById(`${p}-meditation-task`).classList.toggle('completed', medDone);
+        const medBtn = document.getElementById(`${p}-meditation-btn`);
+        medBtn.textContent = medDone ? 'Desfazer' : 'Meditei 10 min ✓';
+        medBtn.classList.toggle('gym-done', medDone);
+
+        // Foguinhos
+        HABITS.forEach(h => renderStreak(`${p}-${h.id}-streak`, season.streaks[person][h.key]));
+
+        // Garrafinhas do dia em aberto
+        const dayInfo  = season.days[liveDate] ? season.days[liveDate][person] : null;
+        const dayEl    = document.getElementById(`${p}-day-bottles`);
+        if (!dayInfo) {
+            dayEl.innerHTML = isWeekend(liveDate)
+                ? `<span class="db-muted">Fim de semana não pontua 🌴</span>`
+                : `<span class="db-muted">Fora da temporada</span>`;
+        } else {
+            const parts = [`${dayInfo.base} de hábito`];
+            if (dayInfo.bonus)  parts.push(`+${dayInfo.bonus} dia perfeito`);
+            if (dayInfo.streak) parts.push(`+${dayInfo.streak} streak 🔥`);
+            dayEl.innerHTML =
+                `<span class="db-total">${bottleIcon()} <strong>${dayInfo.total}</strong> hoje</span>` +
+                `<span class="db-detail">${parts.join(' · ')}</span>`;
+        }
 
         // Score geral
         const overall = overallPct(person);
@@ -259,7 +323,7 @@ function render() {
         document.getElementById(`${p}-overall-bar`).style.width = `${overall}%`;
     });
 
-    // Banner de vencedor do dia
+    // Banner de dia perfeito
     const gPct   = overallPct('guilherme');
     const lPct   = overallPct('luana');
     const banner = document.getElementById('winnerBanner');
@@ -269,15 +333,15 @@ function render() {
 
     if (gPct === 100 && lPct === 100) {
         banner.style.display = 'block';
-        text.textContent = '🏆 Empate! Os dois completaram tudo hoje!';
+        text.textContent = '🏆 Os dois fecharam o dia perfeito! +3 garrafinhas para cada.';
         gCard.classList.add('winner'); lCard.classList.add('winner');
     } else if (gPct === 100) {
         banner.style.display = 'block';
-        text.textContent = '🏆 Guilherme completou todas as metas!';
+        text.textContent = '🏆 Guilherme fechou o dia perfeito! +3 garrafinhas.';
         gCard.classList.add('winner'); lCard.classList.remove('winner');
     } else if (lPct === 100) {
         banner.style.display = 'block';
-        text.textContent = '🏆 Luana completou todas as metas!';
+        text.textContent = '🏆 Luana fechou o dia perfeito! +3 garrafinhas.';
         lCard.classList.add('winner'); gCard.classList.remove('winner');
     } else {
         banner.style.display = 'none';
@@ -288,7 +352,7 @@ function render() {
 // Atualiza display do timer e verifica virada de dia a cada segundo
 setInterval(() => {
     if (lastFirebaseData && lastFirebaseData.date !== todayStr()) {
-        checkAndAwardPoints(lastFirebaseData);
+        checkAndCloseDay(lastFirebaseData);
     }
     render();
 }, 1000);
