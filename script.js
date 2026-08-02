@@ -99,15 +99,28 @@ function checkAndCloseDay(data) {
 
 // ── Troca de temporada (zera placar) ──────────────────────
 function checkSeason(data) {
-    if (data.season === CURRENT_SEASON) return;
+    // Congela a chave antiga: é o que impede uma aba com a versão anterior
+    // do site de achar que virou a temporada e zerar o dia em andamento.
+    if (data[LEGACY_SEASON_KEY] !== LEGACY_SEASON_VALUE) {
+        ROOT.child(LEGACY_SEASON_KEY).set(LEGACY_SEASON_VALUE);
+    }
 
-    ROOT.child('season').transaction(currentSeason => {
+    if (data[SEASON_KEY] === CURRENT_SEASON) return;
+
+    ROOT.child(SEASON_KEY).transaction(currentSeason => {
         if (currentSeason === CURRENT_SEASON) return undefined;
         return CURRENT_SEASON;
     }, (error, committed) => {
         if (error || !committed) return;
-        // O histórico antigo fica no banco, mas fora da janela da temporada
-        // não conta garrafinhas nem aparece no calendário.
+
+        // NUNCA apagar um dia em andamento. Se o estado já é de hoje, ele
+        // pertence à temporada nova e tem que sobreviver à troca — senão uma
+        // aba com a versão antiga do site (que aponta para outra temporada)
+        // fica zerando o dia toda vez que carrega.
+        // O histórico antigo continua no banco: fora da janela da temporada
+        // ele não conta garrafinhas nem aparece no calendário.
+        if (data.date === todayStr()) return;
+
         ROOT.update({
             state: EMPTY_STATE,
             date:  todayStr()
@@ -122,9 +135,10 @@ function startListening() {
 
         if (!data) {
             ROOT.set({
-                season: CURRENT_SEASON,
-                date:   todayStr(),
-                state:  EMPTY_STATE
+                [SEASON_KEY]:        CURRENT_SEASON,
+                [LEGACY_SEASON_KEY]: LEGACY_SEASON_VALUE,
+                date:                todayStr(),
+                state:               EMPTY_STATE
             });
             return;
         }
@@ -256,7 +270,7 @@ function render() {
 
         // Academia
         const gymDone = !!s.gym;
-        document.getElementById(`${p}-gym-status`).textContent = gymDone ? 'Fui! ✅' : 'Não fui';
+        document.getElementById(`${p}-gym-status`).textContent = gymDone ? 'Fui!' : 'Não fui';
         document.getElementById(`${p}-gym-bar`).style.width    = gymDone ? '100%' : '0%';
         document.getElementById(`${p}-gym-task`).classList.toggle('completed', gymDone);
         const gymBtn = document.getElementById(`${p}-gym-btn`);
@@ -265,7 +279,7 @@ function render() {
 
         // Exercício Aeróbico
         const aerobicDone = !!s.aerobic;
-        document.getElementById(`${p}-aerobic-status`).textContent = aerobicDone ? 'Fiz! ✅' : 'Não fiz';
+        document.getElementById(`${p}-aerobic-status`).textContent = aerobicDone ? 'Fiz!' : 'Não fiz';
         document.getElementById(`${p}-aerobic-bar`).style.width    = aerobicDone ? '100%' : '0%';
         document.getElementById(`${p}-aerobic-task`).classList.toggle('completed', aerobicDone);
         const aerobicBtn = document.getElementById(`${p}-aerobic-btn`);
@@ -291,7 +305,7 @@ function render() {
 
         // Meditação
         const medDone = !!s.meditation;
-        document.getElementById(`${p}-meditation-status`).textContent = medDone ? 'Meditei! ✅' : 'Não meditei';
+        document.getElementById(`${p}-meditation-status`).textContent = medDone ? 'Meditei!' : 'Não meditei';
         document.getElementById(`${p}-meditation-bar`).style.width    = medDone ? '100%' : '0%';
         document.getElementById(`${p}-meditation-task`).classList.toggle('completed', medDone);
         const medBtn = document.getElementById(`${p}-meditation-btn`);
@@ -301,10 +315,22 @@ function render() {
         // Foguinhos
         HABITS.forEach(h => renderStreak(`${p}-${h.id}-streak`, season.streaks[person][h.key]));
 
-        // Garrafinhas do dia em aberto
-        const dayInfo  = season.days[liveDate] ? season.days[liveDate][person] : null;
-        const dayEl    = document.getElementById(`${p}-day-bottles`);
-        if (!dayInfo) {
+        // Garrafinhas do dia em aberto.
+        // Dia que não pontua (fim de semana ou fora da temporada) não entra em
+        // season.days — aí mostramos quanto teria rendido, sem contar streak,
+        // já que streak também não anda nesses dias.
+        const dayInfo = season.days[liveDate] ? season.days[liveDate][person] : null;
+        const counts  = !!dayInfo;
+        const bottles = counts ? dayInfo.total : dayBottles(s, g).subtotal;
+
+        const scoreEl = document.getElementById(`${p}-overall`);
+        const noteEl  = document.getElementById(`${p}-overall-note`);
+        scoreEl.textContent = bottles;
+        noteEl.textContent  = counts ? '' : (isWeekend(liveDate) ? 'teria ganhado' : 'não conta');
+        scoreEl.closest('.overall-score').classList.toggle('not-counting', !counts);
+
+        const dayEl = document.getElementById(`${p}-day-bottles`);
+        if (!counts) {
             dayEl.innerHTML = isWeekend(liveDate)
                 ? `<span class="db-muted">Fim de semana não pontua 🌴</span>`
                 : `<span class="db-muted">Fora da temporada</span>`;
@@ -312,15 +338,21 @@ function render() {
             const parts = [`${dayInfo.base} de hábito`];
             if (dayInfo.bonus)  parts.push(`+${dayInfo.bonus} dia perfeito`);
             if (dayInfo.streak) parts.push(`+${dayInfo.streak} streak 🔥`);
-            dayEl.innerHTML =
-                `<span class="db-total">${bottleIcon()} <strong>${dayInfo.total}</strong> hoje</span>` +
-                `<span class="db-detail">${parts.join(' · ')}</span>`;
+            dayEl.innerHTML = `<span class="db-detail">${parts.join(' · ')}</span>`;
         }
 
-        // Score geral
-        const overall = overallPct(person);
-        document.getElementById(`${p}-overall`).textContent     = `${overall}%`;
-        document.getElementById(`${p}-overall-bar`).style.width = `${overall}%`;
+        // Barra de progresso continua sendo a média dos hábitos
+        document.getElementById(`${p}-overall-bar`).style.width = `${overallPct(person)}%`;
+
+        // Garrafinha em cada hábito completado
+        HABITS.forEach(h => {
+            const el = document.getElementById(`${p}-${h.id}-bottle`);
+            if (!el) return;
+            const want = habitDone(h.key, s, g) ? 'on' : 'off';
+            if (el.dataset.state === want) return;
+            el.innerHTML   = want === 'on' ? bottleIcon() : '';
+            el.dataset.state = want;
+        });
     });
 
     // Banner de dia perfeito
@@ -358,4 +390,21 @@ setInterval(() => {
 }, 1000);
 
 // ── Init ──────────────────────────────────────────────────
+// Um espaço por hábito para a garrafinha de "completado". Fica aqui em vez de
+// no HTML para o desenho do ícone continuar existindo num lugar só (config.js).
+function setupTaskBottles() {
+    PEOPLE.forEach(person => {
+        const p = PREFIX[person];
+        HABITS.forEach(h => {
+            const info = document.querySelector(`#${p}-${h.id}-task .task-info`);
+            if (!info) return;
+            const span = document.createElement('span');
+            span.className = 'task-bottle';
+            span.id        = `${p}-${h.id}-bottle`;
+            info.appendChild(span);
+        });
+    });
+}
+
+setupTaskBottles();
 startListening();

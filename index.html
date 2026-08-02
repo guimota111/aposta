@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Competição Diária ⚔️</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
     <div class="app">
@@ -51,7 +51,10 @@
                                 <div class="overall-fill" id="g-overall-bar"></div>
                             </div>
                         </div>
-                        <div class="overall-score g-color" id="g-overall">0%</div>
+                        <div class="overall-score g-color">
+                            <span class="os-value"><span id="g-overall">0</span><svg class="bottle-ico"><use href="#bottle-icon"></use></svg></span>
+                            <span class="os-note" id="g-overall-note"></span>
+                        </div>
                     </div>
 
                     <div class="day-bottles" id="g-day-bottles"></div>
@@ -209,7 +212,10 @@
                                 <div class="overall-fill" id="l-overall-bar"></div>
                             </div>
                         </div>
-                        <div class="overall-score l-color" id="l-overall">0%</div>
+                        <div class="overall-score l-color">
+                            <span class="os-value"><span id="l-overall">0</span><svg class="bottle-ico"><use href="#bottle-icon"></use></svg></span>
+                            <span class="os-note" id="l-overall-note"></span>
+                        </div>
                     </div>
 
                     <div class="day-bottles" id="l-day-bottles"></div>
@@ -365,7 +371,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-    <script src="config.js"></script>
-    <script src="script.js"></script>
+    <script src="config.js?v=2"></script>
+    <script src="script.js?v=2"></script>
 </body>
 </html>
