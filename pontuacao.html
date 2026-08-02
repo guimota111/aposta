@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pontuação – Competição Diária</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page">
+
+        <div class="page-header">
+            <h1>🏅 Pontuação</h1>
+        </div>
+
+        <nav class="top-nav page-nav">
+            <a href="index.html" class="nav-link">⚔️ Hoje</a>
+            <a href="historico.html" class="nav-link">📅 Histórico</a>
+            <a href="pontuacao.html" class="nav-link active">🏅 Pontuação</a>
+            <a href="opcoes.html" class="nav-link">⚙️ Opções</a>
+        </nav>
+
+        <!-- Placar ao vivo -->
+        <div class="scoreboard-card">
+            <span class="sb-label">🏆 Placar da temporada</span>
+            <div class="sb-scores">
+                <div class="sb-side">
+                    <span class="sb-name g-color">Guilherme</span>
+                    <span class="sb-pts g-color" id="g-bottles">0</span>
+                    <svg class="bottle-ico sb-bottle"><use href="#bottle-icon"></use></svg>
+                </div>
+                <span class="sb-sep">—</span>
+                <div class="sb-side">
+                    <span class="sb-name l-color">Luana</span>
+                    <span class="sb-pts l-color" id="l-bottles">0</span>
+                    <svg class="bottle-ico sb-bottle"><use href="#bottle-icon"></use></svg>
+                </div>
+            </div>
+            <div class="sb-balance" id="sbBalance">Saldo: —</div>
+        </div>
+
+        <!-- Como ganhar garrafinhas -->
+        <div class="card">
+            <div class="card-title">💧 Como ganhar garrafinhas</div>
+
+            <div class="rule">
+                <span class="rule-badge">+1 <svg class="bottle-ico"><use href="#bottle-icon"></use></svg></span>
+                <span class="rule-text">
+                    <b>Completar qualquer hábito</b> vale 1 garrafinha.
+                    <small>Vale para cada hábito, separadamente. São 8 hábitos, então dá até 8 garrafinhas por dia só aqui.</small>
+                </span>
+            </div>
+
+            <div class="rule">
+                <span class="rule-badge">+3 <svg class="bottle-ico"><use href="#bottle-icon"></use></svg></span>
+                <span class="rule-text">
+                    <b>Dia perfeito:</b> completar <b>todos os 8 hábitos</b> no mesmo dia dá 3 garrafinhas de bônus.
+                    <small>O bônus é somado, não substitui: dia perfeito = 8 + 3 = <b>11 garrafinhas</b> (fora streaks).</small>
+                </span>
+            </div>
+
+            <div class="rule">
+                <span class="rule-badge">🔥</span>
+                <span class="rule-text">
+                    <b>Streak:</b> a cada 3 dias úteis seguidos do <b>mesmo hábito</b>, você fecha um bloco e ganha garrafinhas — e o prêmio cresce a cada bloco.
+                    <small>3 dias → +1 · 6 dias → +2 · 9 dias → +3 · e assim por diante. Cada hábito tem o seu próprio streak.</small>
+                </span>
+            </div>
+        </div>
+
+        <!-- Tabela de streaks -->
+        <div class="card">
+            <div class="card-title">🔥 Tabela de streaks</div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Dias seguidos</th>
+                            <th>Ganha na hora</th>
+                            <th>Total acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="streakTable"></tbody>
+                </table>
+            </div>
+            <p style="margin-top:0.9rem">
+                O streak conta <strong>dias úteis</strong>. Sábado e domingo são pulados: não contam como dia
+                do streak e também <strong>não quebram</strong> o streak. Falhar numa segunda a sexta zera aquele hábito.
+            </p>
+        </div>
+
+        <!-- Hábitos e metas -->
+        <div class="card">
+            <div class="card-title">🎯 Hábitos e metas</div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hábito</th>
+                            <th>Guilherme</th>
+                            <th>Luana</th>
+                        </tr>
+                    </thead>
+                    <tbody id="habitTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Exemplo -->
+        <div class="card">
+            <div class="card-title">🧮 Exemplo de um dia</div>
+            <p style="margin-bottom:0.8rem">
+                Sexta-feira. A pessoa fecha os 8 hábitos, e nesse dia a Academia completa 6 dias seguidos
+                e o Estudo completa 3 dias seguidos:
+            </p>
+            <div class="calc">
+                <div class="line"><span>8 hábitos completados</span><span>+8</span></div>
+                <div class="line"><span>Bônus de dia perfeito</span><span>+3</span></div>
+                <div class="line"><span>🔥 Academia fechou 6 dias</span><span>+2</span></div>
+                <div class="line"><span>🔥 Estudo fechou 3 dias</span><span>+1</span></div>
+                <div class="line total"><span>Total do dia</span><span id="calcTotal">14</span></div>
+            </div>
+        </div>
+
+        <!-- Saldo -->
+        <div class="card">
+            <div class="card-title">⚖️ Saldo</div>
+            <p>
+                O placar mostra quantas garrafinhas cada um acumulou na temporada. O <strong>saldo</strong>
+                é a diferença: quem tiver menos garrafinhas <strong>deve</strong> a diferença para o outro,
+                em garrafinhas de água de verdade.
+            </p>
+            <p style="margin-top:0.7rem">
+                Exemplo: Guilherme 47 e Luana 52 → <strong>Guilherme deve 5 garrafinhas a Luana</strong>.
+            </p>
+        </div>
+
+        <!-- Regras gerais -->
+        <div class="card">
+            <div class="card-title">📌 Regras gerais</div>
+            <div class="note">
+                <span>🌴</span>
+                <span>
+                    <strong>Fim de semana não conta.</strong> Sábado e domingo não geram garrafinhas
+                    e não entram no streak (nem para somar, nem para quebrar).
+                </span>
+            </div>
+            <p style="margin-top:0.8rem">
+                <strong>Temporada:</strong> <span id="seasonInfo"></span>. Dias fora dessa janela não contam
+                para o placar.
+            </p>
+            <p>
+                <strong>Virada do dia:</strong> à meia-noite o dia é fechado no histórico e os hábitos
+                zeram. Dias passados podem ser corrigidos na página de Histórico, e o placar se
+                recalcula sozinho.
+            </p>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="config.js"></script>
+    <script>
+        // ── Tabela de streaks ──
+        (function () {
+            let acumulado = 0;
+            let linhas    = '';
+            for (let bloco = 1; bloco <= 5; bloco++) {
+                const dias   = bloco * BOTTLE_RULES.streakBlock;
+                const ganho  = streakAward(dias);
+                acumulado   += ganho;
+                linhas += `<tr>
+                    <td>${dias} dias</td>
+                    <td class="num">+${ganho} ${bottleIcon()}</td>
+                    <td class="accum">${acumulado} ${bottleIcon()}</td>
+                </tr>`;
+            }
+            linhas += `<tr><td>…</td><td class="num">…</td><td class="accum">…</td></tr>`;
+            document.getElementById('streakTable').innerHTML = linhas;
+        })();
+
+        // ── Tabela de hábitos ──
+        function goalLabel(key, person) {
+            const g = GOALS[person];
+            switch (key) {
+                case 'questions':    return `${g.questions} questões`;
+                case 'studySeconds': return `${(g.studySeconds / 3600).toLocaleString('pt-BR')}h`;
+                case 'water':        return `${(g.water / 1000).toLocaleString('pt-BR')} L`;
+                case 'bookPages':    return `${g.bookPages} páginas`;
+                case 'steps':        return `${g.steps.toLocaleString('pt-BR')} passos`;
+                case 'gym':          return 'ir à academia';
+                case 'aerobic':      return 'fazer o aeróbico';
+                case 'meditation':   return `${g.meditationMinutes} minutos`;
+                default:             return '—';
+            }
+        }
+
+        document.getElementById('habitTable').innerHTML = HABITS.map(h => `
+            <tr>
+                <td>${h.icon} ${h.label}</td>
+                <td>${goalLabel(h.key, 'guilherme')}</td>
+                <td>${goalLabel(h.key, 'luana')}</td>
+            </tr>
+        `).join('');
+
+        // ── Total do exemplo (derivado das regras) ──
+        document.getElementById('calcTotal').textContent =
+            HABITS.length * BOTTLE_RULES.perHabit + BOTTLE_RULES.perfectDay + streakAward(6) + streakAward(3);
+
+        // ── Info da temporada ──
+        function fmtDate(d) {
+            const [y, m, day] = d.split('-');
+            return `${day}/${m}/${y}`;
+        }
+        document.getElementById('seasonInfo').textContent =
+            `${SEASON_LABEL} — de ${fmtDate(SEASON_START)} a ${fmtDate(SEASON_END)}`;
+
+        // ── Placar ao vivo ──
+        ROOT.on('value', snapshot => {
+            const data   = snapshot.val() || {};
+            const season = computeSeason(data.history, data.state, data.date, todayStr());
+
+            document.getElementById('g-bottles').textContent = season.totals.guilherme;
+            document.getElementById('l-bottles').textContent = season.totals.luana;
+
+            const bal   = balanceOf(season.totals);
+            const balEl = document.getElementById('sbBalance');
+            if (bal.amount === 0) {
+                balEl.innerHTML = 'Saldo: <strong>empatado</strong> — ninguém deve nada';
+            } else {
+                const word = bal.amount === 1 ? 'garrafinha' : 'garrafinhas';
+                balEl.innerHTML = `Saldo: <strong>${NAMES[bal.debtor]}</strong> deve ` +
+                    `<strong>${bal.amount}</strong> ${bottleIcon()} ${word} a <strong>${NAMES[bal.creditor]}</strong>`;
+            }
+        });
+    </script>
+</body>
+</html>

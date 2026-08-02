@@ -6,49 +6,6 @@
     <title>Histórico – Competição Diária</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .hist-app {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 1.5rem 1rem;
-        }
-
-        .hist-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .hist-header h1 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0;
-        }
-
-        .btn-back {
-            background: var(--bg-task);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 0.35rem 0.8rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: color 0.2s, border-color 0.2s;
-        }
-
-        .btn-back:hover { color: var(--text); border-color: #555; }
-
-        /* ── Card do calendário ── */
-        .calendar-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.25rem;
-        }
-
         /* ── Navegação de mês ── */
         .month-nav {
             display: flex;
@@ -69,7 +26,6 @@
             line-height: 1;
             transition: background 0.15s;
         }
-
         .btn-month:hover:not(:disabled) { background: #2a2a4a; }
         .btn-month:disabled { opacity: 0.3; cursor: default; }
 
@@ -108,13 +64,22 @@
             aspect-ratio: 1;
             border-radius: 7px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 1px;
             font-size: 0.72rem;
             font-weight: 500;
             cursor: default;
             transition: transform 0.1s, box-shadow 0.1s;
             position: relative;
+        }
+
+        .day-cell .dc-bottles {
+            font-size: 0.55rem;
+            font-weight: 700;
+            opacity: 0.85;
+            line-height: 1;
         }
 
         .day-cell:not(.empty):not(.future):hover {
@@ -124,16 +89,17 @@
         }
 
         .day-cell.empty   { background: transparent; }
-        .day-cell.future  { background: #151530; color: #2d2d50; }
-        .day-cell.no-data { background: #1e1e3a; color: #4a4a6a; }
+        .day-cell.future  { background: #101a2e; color: #2b3a55; }
+        .day-cell.no-data { background: #16203a; color: #4a5a7a; }
+        .day-cell.offseason { background: #10182a; color: #34405c; }
 
-        .day-cell.guilherme { background: var(--color-g); color: #fff; }
-        .day-cell.luana     { background: var(--color-l); color: #fff; }
-        .day-cell.empate    { background: #d97706; color: #fff; }
-        .day-cell.fds       { background: #232342; color: #6b6b95; }
+        .day-cell.guilherme { background: var(--color-g); color: #062338; }
+        .day-cell.luana     { background: var(--color-l); color: #3a0d16; }
+        .day-cell.empate    { background: #d97706; color: #2a1602; }
+        .day-cell.fds       { background: #1a2440; color: #5a6a8c; }
 
         .day-cell.today {
-            outline: 2px solid var(--text-muted);
+            outline: 2px solid #fdba74;
             outline-offset: -2px;
         }
 
@@ -165,7 +131,7 @@
         .month-totals {
             display: flex;
             justify-content: center;
-            gap: 1.5rem;
+            gap: 1.75rem;
             margin-top: 1.25rem;
             padding-top: 1.25rem;
             border-top: 1px solid var(--border);
@@ -178,75 +144,34 @@
             gap: 0.2rem;
         }
 
-        .total-count {
-            font-size: 1.5rem;
-            font-weight: 800;
-        }
-
-        .total-label {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-        }
+        .total-count { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.25rem; }
+        .total-count .bottle-ico { font-size: 1.2rem; }
+        .total-label { font-size: 0.72rem; color: var(--text-muted); }
 
         .total-item.g .total-count { color: var(--color-g-light); }
         .total-item.l .total-count { color: var(--color-l-light); }
-        .total-item.e .total-count { color: #fbbf24; }
-
-        /* ── Placar da temporada ── */
-        .season-totals {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px dashed var(--border);
-            text-align: center;
-        }
-
-        .season-totals-title {
-            display: block;
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.35rem;
-        }
-
-        .season-line {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .season-line .g-color { color: var(--color-g-light); }
-        .season-line .l-color { color: var(--color-l-light); }
-        .season-line .sep     { color: var(--text-muted); margin: 0 0.4rem; }
-
-        .season-empates {
-            display: block;
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
 
         /* ── Modal de edição ── */
         .edit-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
+            inset: 0;
+            background: rgba(0,0,0,0.82);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            padding: 1rem;
         }
 
         .edit-modal-content {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
-            max-width: 90vw;
-            max-height: 90vh;
+            width: 100%;
+            max-width: 640px;
+            max-height: 88vh;
             overflow-y: auto;
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
 
         .edit-header {
@@ -256,83 +181,114 @@
             margin-bottom: 1rem;
         }
 
-        .edit-header h2 {
-            margin: 0;
-            font-size: 1.2rem;
-        }
+        .edit-header h2 { margin: 0; font-size: 1.1rem; }
 
         .btn-close {
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
+            line-height: 1;
             cursor: pointer;
             color: var(--text-muted);
         }
-
         .btn-close:hover { color: var(--text); }
 
-        /* ── Estilos do modal de edição ── */
-        .competitors {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        .edit-people {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
         }
 
-        .competitor-card {
+        .edit-person {
             background: var(--bg-task);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 1rem;
+            padding: 0.85rem;
         }
 
-        .competitor-card h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1rem;
-        }
-
-        .tasks {
+        .edit-person h3 {
+            margin: 0 0 0.3rem 0;
+            font-size: 0.95rem;
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            align-items: baseline;
             gap: 0.5rem;
         }
 
-        .task {
+        .edit-person .ep-bottles {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fdba74;
+        }
+
+        .edit-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem;
-            background: var(--bg-card);
-            border-radius: 8px;
+            gap: 0.35rem;
+            padding: 0.4rem 0;
+            border-top: 1px solid rgba(30,45,74,.6);
+            flex-wrap: wrap;
         }
+        .edit-row:first-of-type { border-top: none; }
 
-        .task span {
+        .edit-row .er-label {
             flex: 1;
-        }
-
-        .task button {
-            background: var(--color-g);
-            border: none;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
+            min-width: 100px;
             font-size: 0.8rem;
+            color: var(--text-muted);
         }
+        .edit-row .er-label b { color: var(--text); }
+        .edit-row.done .er-label b { color: #6ee7b7; }
 
-        .task button:hover {
-            opacity: 0.8;
+        .edit-row button {
+            background: rgba(255,255,255,.06);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-family: var(--font);
+            white-space: nowrap;
+        }
+        .edit-row button:hover { background: rgba(255,255,255,.12); }
+
+        .edit-row input {
+            width: 76px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 0.78rem;
+            padding: 0.25rem 0.4rem;
+            -moz-appearance: textfield;
+        }
+        .edit-row input::-webkit-outer-spin-button,
+        .edit-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        @media (max-width: 620px) {
+            .edit-people { grid-template-columns: 1fr; }
+            .month-totals { gap: 1rem; }
+            .total-count { font-size: 1.25rem; }
         }
     </style>
 </head>
 <body>
-    <div class="hist-app">
+    <div class="page">
 
-        <div class="hist-header">
-            <a href="index.html" class="btn-back">← Voltar</a>
+        <div class="page-header">
             <h1>📅 Histórico</h1>
         </div>
 
-        <div class="calendar-card">
+        <nav class="top-nav page-nav">
+            <a href="index.html" class="nav-link">⚔️ Hoje</a>
+            <a href="historico.html" class="nav-link active">📅 Histórico</a>
+            <a href="pontuacao.html" class="nav-link">🏅 Pontuação</a>
+            <a href="opcoes.html" class="nav-link">⚙️ Opções</a>
+        </nav>
+
+        <div class="card">
             <div class="month-nav">
                 <button class="btn-month" id="btnPrev" onclick="changeMonth(-1)">‹</button>
                 <span class="month-title" id="monthTitle"></span>
@@ -353,51 +309,62 @@
 
             <div class="month-totals">
                 <div class="total-item g">
-                    <span class="total-count" id="totalG">0</span>
-                    <span class="total-label">Guilherme</span>
-                </div>
-                <div class="total-item e">
-                    <span class="total-count" id="totalE">0</span>
-                    <span class="total-label">Empates</span>
+                    <span class="total-count">
+                        <span id="totalG">0</span>
+                        <svg class="bottle-ico"><use href="#bottle-icon"></use></svg>
+                    </span>
+                    <span class="total-label">Guilherme no mês</span>
                 </div>
                 <div class="total-item l">
-                    <span class="total-count" id="totalL">0</span>
-                    <span class="total-label">Luana</span>
+                    <span class="total-count">
+                        <span id="totalL">0</span>
+                        <svg class="bottle-ico"><use href="#bottle-icon"></use></svg>
+                    </span>
+                    <span class="total-label">Luana no mês</span>
                 </div>
-            </div>
-
-            <div class="season-totals">
-                <span class="season-totals-title">🔥 Placar da temporada</span>
-                <span class="season-line">
-                    <span class="g-color" id="seasonG">0</span>
-                    <span class="sep">×</span>
-                    <span class="l-color" id="seasonL">0</span>
-                </span>
-                <span class="season-empates"><span id="seasonE">0</span> empate(s)</span>
             </div>
 
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-dot" style="background:var(--color-g)"></div>
-                    Guilherme venceu
+                    Guilherme fez mais
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:var(--color-l)"></div>
-                    Luana venceu
+                    Luana fez mais
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot" style="background:#d97706"></div>
                     Empate
                 </div>
                 <div class="legend-item">
-                    <div class="legend-dot" style="background:#232342"></div>
+                    <div class="legend-dot" style="background:#1a2440"></div>
                     Fim de semana
                 </div>
                 <div class="legend-item">
-                    <div class="legend-dot" style="background:#1e1e3a"></div>
+                    <div class="legend-dot" style="background:#16203a"></div>
                     Sem dados
                 </div>
             </div>
+        </div>
+
+        <!-- Placar da temporada -->
+        <div class="scoreboard-card">
+            <span class="sb-label">🏆 Placar da temporada</span>
+            <div class="sb-scores">
+                <div class="sb-side">
+                    <span class="sb-name g-color">Guilherme</span>
+                    <span class="sb-pts g-color" id="seasonG">0</span>
+                    <svg class="bottle-ico sb-bottle"><use href="#bottle-icon"></use></svg>
+                </div>
+                <span class="sb-sep">—</span>
+                <div class="sb-side">
+                    <span class="sb-name l-color">Luana</span>
+                    <span class="sb-pts l-color" id="seasonL">0</span>
+                    <svg class="bottle-ico sb-bottle"><use href="#bottle-icon"></use></svg>
+                </div>
+            </div>
+            <div class="sb-balance" id="sbBalance">Saldo: —</div>
         </div>
 
         <!-- Modal de edição -->
@@ -407,9 +374,7 @@
                     <h2 id="editTitle">Editar Dia</h2>
                     <button class="btn-close" onclick="closeEditModal()">×</button>
                 </div>
-                <div id="editContent">
-                    <!-- Conteúdo será preenchido dinamicamente -->
-                </div>
+                <div id="editContent"></div>
             </div>
         </div>
 
@@ -419,22 +384,50 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <script src="config.js"></script>
     <script>
-        // Firebase (db/ROOT), metas, temporada e calcPct vêm de config.js
+        // Firebase (db/ROOT), metas, temporada e regras de garrafinhas vêm de config.js
 
-        const today = new Date();
-        let viewYear  = today.getFullYear();
-        let viewMonth = today.getMonth();
+        // O calendário só navega dentro da temporada atual
+        const MIN_YEAR  = Number(SEASON_START.slice(0, 4));
+        const MIN_MONTH = Number(SEASON_START.slice(5, 7)) - 1;
+        const MAX_YEAR  = Number(SEASON_END.slice(0, 4));
+        const MAX_MONTH = Number(SEASON_END.slice(5, 7)) - 1;
 
-        let historyData = {};
+        const today   = new Date();
+        const todayY  = today.getFullYear();
+        const todayM  = today.getMonth();
+
+        // Mês inicial: o mês atual, se estiver dentro da temporada
+        let viewYear  = todayY;
+        let viewMonth = todayM;
+        clampView();
+
+        let historyData     = {};
+        let liveState       = {};
+        let liveDate        = todayStr();
+        let season          = { totals: { guilherme: 0, luana: 0 }, days: {}, streaks: {}, dates: [] };
         let currentEditDate = null;
 
+        function monthIndex(y, m) { return y * 12 + m; }
+
+        function clampView() {
+            const min = monthIndex(MIN_YEAR, MIN_MONTH);
+            const max = Math.min(monthIndex(MAX_YEAR, MAX_MONTH), monthIndex(todayY, todayM));
+            const cur = monthIndex(viewYear, viewMonth);
+            const target = Math.min(Math.max(cur, min), Math.max(max, min));
+            viewYear  = Math.floor(target / 12);
+            viewMonth = target % 12;
+        }
+
         function renderCalendar() {
-            const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
+            const min = monthIndex(MIN_YEAR, MIN_MONTH);
+            const max = Math.min(monthIndex(MAX_YEAR, MAX_MONTH), monthIndex(todayY, todayM));
+            const cur = monthIndex(viewYear, viewMonth);
 
             document.getElementById('monthTitle').textContent =
                 new Date(viewYear, viewMonth, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-            document.getElementById('btnNext').disabled = isCurrentMonth;
+            document.getElementById('btnPrev').disabled = cur <= min;
+            document.getElementById('btnNext').disabled = cur >= max;
 
             const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
             const daysInMonth  = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -443,9 +436,8 @@
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
 
-            let countG = 0, countL = 0, countE = 0;
+            let monthG = 0, monthL = 0;
 
-            // Células vazias antes do dia 1
             for (let i = 0; i < firstWeekday; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'day-cell empty';
@@ -453,38 +445,39 @@
             }
 
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`;
-                const result  = resultOf(historyData[dateStr]);
+                const dateStr  = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(d)}`;
                 const isFuture = dateStr > todayDate;
                 const isToday  = dateStr === todayDate;
-                const counts   = isInSeason(dateStr);
+                const info     = season.days[dateStr];
 
                 const cell = document.createElement('div');
-                cell.textContent = d;
+                const num  = document.createElement('span');
+                num.textContent = d;
+                cell.appendChild(num);
 
                 if (isFuture) {
                     cell.className = 'day-cell future';
+                } else if (isWeekend(dateStr)) {
+                    cell.className = 'day-cell fds';
+                    cell.title = 'Fim de semana — não pontua';
+                } else if (!isInSeason(dateStr)) {
+                    cell.className = 'day-cell offseason';
+                    cell.title = 'Fora da temporada';
+                } else if (!info || (info.guilherme.total === 0 && info.luana.total === 0)) {
+                    cell.className = 'day-cell no-data';
+                    cell.title = 'Sem dados — clique para preencher';
+                    cell.onclick = () => openEditModal(dateStr);
                 } else {
-                    if (isWeekend(dateStr) || result === 'fds') {
-                        cell.className = 'day-cell fds';
-                        cell.title = 'Fim de semana — não pontua';
-                    } else if (result === 'guilherme') {
-                        cell.className = 'day-cell guilherme';
-                        cell.title = 'Guilherme venceu';
-                        if (counts) countG++;
-                    } else if (result === 'luana') {
-                        cell.className = 'day-cell luana';
-                        cell.title = 'Luana venceu';
-                        if (counts) countL++;
-                    } else if (result === 'empate') {
-                        cell.className = 'day-cell empate';
-                        cell.title = 'Empate';
-                        if (counts) countE++;
-                    } else {
-                        cell.className = 'day-cell no-data';
-                        cell.title = 'Sem dados / Clique para editar';
-                    }
-                    if (!counts) cell.title += ' (fora da temporada)';
+                    cell.className = `day-cell ${info.winner}`;
+                    cell.title = `Guilherme ${info.guilherme.total} × ${info.luana.total} Luana (garrafinhas)`;
+
+                    const tag = document.createElement('span');
+                    tag.className   = 'dc-bottles';
+                    tag.textContent = `${info.guilherme.total}·${info.luana.total}`;
+                    cell.appendChild(tag);
+
+                    monthG += info.guilherme.total;
+                    monthL += info.luana.total;
                     cell.onclick = () => openEditModal(dateStr);
                 }
 
@@ -492,49 +485,38 @@
                 grid.appendChild(cell);
             }
 
-            document.getElementById('totalG').textContent = countG;
-            document.getElementById('totalL').textContent = countL;
-            document.getElementById('totalE').textContent = countE;
+            document.getElementById('totalG').textContent = monthG;
+            document.getElementById('totalL').textContent = monthL;
 
-            renderSeasonTotals();
-        }
+            document.getElementById('seasonG').textContent = season.totals.guilherme;
+            document.getElementById('seasonL').textContent = season.totals.luana;
 
-        // Placar da temporada, derivado do mesmo histórico dos quadradinhos
-        function renderSeasonTotals() {
-            const t = countSeasonPoints(historyData);
-            document.getElementById('seasonG').textContent = t.guilherme;
-            document.getElementById('seasonL').textContent = t.luana;
-            document.getElementById('seasonE').textContent = t.empate;
+            const bal   = balanceOf(season.totals);
+            const balEl = document.getElementById('sbBalance');
+            if (bal.amount === 0) {
+                balEl.innerHTML = 'Saldo: <strong>empatado</strong> — ninguém deve nada';
+            } else {
+                const word = bal.amount === 1 ? 'garrafinha' : 'garrafinhas';
+                balEl.innerHTML = `Saldo: <strong>${NAMES[bal.debtor]}</strong> deve ` +
+                    `<strong>${bal.amount}</strong> ${bottleIcon()} ${word} a <strong>${NAMES[bal.creditor]}</strong>`;
+            }
         }
 
         function changeMonth(delta) {
             viewMonth += delta;
             if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
             if (viewMonth > 11) { viewMonth = 0;  viewYear++; }
-
-            // Não navega para meses futuros
-            if (viewYear > today.getFullYear() ||
-               (viewYear === today.getFullYear() && viewMonth > today.getMonth())) {
-                viewYear  = today.getFullYear();
-                viewMonth = today.getMonth();
-            }
-
+            clampView();
             renderCalendar();
         }
 
+        // ── Modal ──────────────────────────────────────────
         function openEditModal(dateStr) {
             currentEditDate = dateStr;
-            const modal = document.getElementById('editModal');
-            const title = document.getElementById('editTitle');
-            const content = document.getElementById('editContent');
-
             const [y, m, d] = dateStr.split('-');
-            title.textContent = `Editar ${d}/${m}/${y}`;
-
-            const dayData = historyData[dateStr] || {};
-            const state = (typeof dayData === 'object' && dayData.state) ? dayData.state : { guilherme: {}, luana: {} };
-            content.innerHTML = generateEditHTML(dateStr, state);
-            modal.style.display = 'flex';
+            document.getElementById('editTitle').textContent = `Editar ${d}/${m}/${y}`;
+            renderEditModal();
+            document.getElementById('editModal').style.display = 'flex';
         }
 
         function closeEditModal() {
@@ -542,172 +524,156 @@
             currentEditDate = null;
         }
 
-        function generateEditHTML(dateStr, state) {
-            const g = state.guilherme || {};
-            const l = state.luana || {};
-
-            const notes = [];
-            if (isWeekend(dateStr)) notes.push('Fim de semana — este dia não pontua.');
-            if (!isInSeason(dateStr)) notes.push('Fora da temporada atual — não conta para o placar.');
-            const note = notes.length
-                ? `<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 0.75rem">${notes.join(' ')}</p>`
-                : '';
-
-            return `
-                ${note}
-                <div class="competitors">
-                    <div class="competitor-card">
-                        <h3>Guilherme</h3>
-                        <div class="tasks">
-                            <div class="task">
-                                <span>Questões: ${g.questions || 0}/${GOALS.guilherme.questions}</span>
-                                <button onclick="updateHistory('guilherme', 'questions', -1)">−</button>
-                                <button onclick="updateHistory('guilherme', 'questions', 1)">+</button>
-                            </div>
-                            <div class="task">
-                                <span>Estudo: ${fmtTime(g.studySeconds || 0)} / 2:00h</span>
-                                <button onclick="updateHistory('guilherme', 'studySeconds', -600)">−10min</button>
-                                <button onclick="updateHistory('guilherme', 'studySeconds', 600)">+10min</button>
-                            </div>
-                            <div class="task">
-                                <span>Água: ${g.water || 0} / ${GOALS.guilherme.water}ml</span>
-                                <button onclick="updateHistory('guilherme', 'water', -250)">−</button>
-                                <button onclick="updateHistory('guilherme', 'water', 250)">+250ml</button>
-                            </div>
-                            <div class="task">
-                                <span>Academia: ${g.gym ? 'Feito' : 'Não'}</span>
-                                <button onclick="toggleHistory('guilherme', 'gym')">Alternar</button>
-                            </div>
-                            <div class="task">
-                                <span>Aeróbico: ${g.aerobic ? 'Feito' : 'Não'}</span>
-                                <button onclick="toggleHistory('guilherme', 'aerobic')">Alternar</button>
-                            </div>
-                            <div class="task">
-                                <span>Livro: ${g.bookPages || 0}/${GOALS.guilherme.bookPages} pág.</span>
-                                <button onclick="updateHistory('guilherme', 'bookPages', -1)">−</button>
-                                <button onclick="updateHistory('guilherme', 'bookPages', 1)">+</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="competitor-card">
-                        <h3>Luana</h3>
-                        <div class="tasks">
-                            <div class="task">
-                                <span>Questões: ${l.questions || 0}/${GOALS.luana.questions}</span>
-                                <button onclick="updateHistory('luana', 'questions', -1)">−</button>
-                                <button onclick="updateHistory('luana', 'questions', 1)">+</button>
-                            </div>
-                            <div class="task">
-                                <span>Estudo: ${fmtTime(l.studySeconds || 0)} / 2:00h</span>
-                                <button onclick="updateHistory('luana', 'studySeconds', -600)">−10min</button>
-                                <button onclick="updateHistory('luana', 'studySeconds', 600)">+10min</button>
-                            </div>
-                            <div class="task">
-                                <span>Água: ${l.water || 0} / ${GOALS.luana.water}ml</span>
-                                <button onclick="updateHistory('luana', 'water', -250)">−</button>
-                                <button onclick="updateHistory('luana', 'water', 250)">+250ml</button>
-                            </div>
-                            <div class="task">
-                                <span>Academia: ${l.gym ? 'Feito' : 'Não'}</span>
-                                <button onclick="toggleHistory('luana', 'gym')">Alternar</button>
-                            </div>
-                            <div class="task">
-                                <span>Aeróbico: ${l.aerobic ? 'Feito' : 'Não'}</span>
-                                <button onclick="toggleHistory('luana', 'aerobic')">Alternar</button>
-                            </div>
-                            <div class="task">
-                                <span>Livro: ${l.bookPages || 0}/${GOALS.luana.bookPages} pág.</span>
-                                <button onclick="updateHistory('luana', 'bookPages', -1)">−</button>
-                                <button onclick="updateHistory('luana', 'bookPages', 1)">+</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+        function dayStateFor(dateStr) {
+            if (dateStr === liveDate) return liveState || {};
+            return stateOf(historyData[dateStr]);
         }
 
-        function fmtTime(seconds) {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
+        function renderEditModal() {
+            if (!currentEditDate) return;
+            document.getElementById('editContent').innerHTML =
+                generateEditHTML(currentEditDate, dayStateFor(currentEditDate));
+        }
+
+        function fmtHM(seconds) {
+            const h = Math.floor((seconds || 0) / 3600);
+            const m = Math.floor(((seconds || 0) % 3600) / 60);
             return `${h}:${String(m).padStart(2, '0')}`;
         }
 
-        function updateHistory(person, field, delta) {
+        // Controles de cada hábito dentro do modal
+        function habitControls(person, key, s, g) {
+            const q = k => `'${person}', '${k}'`;
+            switch (key) {
+                case 'questions':
+                    return { text: `${s.questions || 0}/${g.questions}`,
+                             ctrl: `<button onclick="updateHistory(${q('questions')}, -1)">−</button>
+                                    <button onclick="updateHistory(${q('questions')}, 1)">+</button>` };
+                case 'studySeconds':
+                    return { text: `${fmtHM(s.studySeconds)} / ${fmtHM(g.studySeconds)}`,
+                             ctrl: `<button onclick="updateHistory(${q('studySeconds')}, -600)">−10m</button>
+                                    <button onclick="updateHistory(${q('studySeconds')}, 600)">+10m</button>` };
+                case 'water':
+                    return { text: `${s.water || 0}/${g.water}ml`,
+                             ctrl: `<button onclick="updateHistory(${q('water')}, -250)">−</button>
+                                    <button onclick="updateHistory(${q('water')}, 250)">+250</button>` };
+                case 'bookPages':
+                    return { text: `${s.bookPages || 0}/${g.bookPages} pág`,
+                             ctrl: `<button onclick="updateHistory(${q('bookPages')}, -1)">−</button>
+                                    <button onclick="updateHistory(${q('bookPages')}, 1)">+</button>` };
+                case 'steps':
+                    return { text: `${(s.steps || 0).toLocaleString('pt-BR')}/${g.steps.toLocaleString('pt-BR')}`,
+                             ctrl: `<input type="number" min="0" step="1" id="edit-${person}-steps"
+                                           value="${s.steps || 0}"
+                                           onkeydown="if(event.key==='Enter')setHistorySteps('${person}')">
+                                    <button onclick="setHistorySteps('${person}')">OK</button>` };
+                default: // gym, aerobic, meditation
+                    return { text: s[key] ? 'Feito ✅' : 'Não',
+                             ctrl: `<button onclick="toggleHistory(${q(key)})">Alternar</button>` };
+            }
+        }
+
+        function generateEditHTML(dateStr, dayState) {
+            const notes = [];
+            if (isWeekend(dateStr))    notes.push('Fim de semana — este dia não gera garrafinhas nem conta para streaks.');
+            if (!isInSeason(dateStr))  notes.push('Fora da temporada atual — não conta para o placar.');
+            if (dateStr === liveDate)  notes.push('Este é o dia em aberto — as alterações valem imediatamente.');
+
+            const note = notes.length
+                ? `<p style="color:var(--text-muted);font-size:0.78rem;line-height:1.5;margin:0 0 0.85rem">${notes.join(' ')}</p>`
+                : '';
+
+            const cards = PEOPLE.map(person => {
+                const s = dayState[person] || {};
+                const g = GOALS[person];
+                const b = dayBottles(s, g);
+
+                const rows = HABITS.map(h => {
+                    const c    = habitControls(person, h.key, s, g);
+                    const done = habitDone(h.key, s, g);
+                    return `<div class="edit-row ${done ? 'done' : ''}">
+                        <span class="er-label">${h.icon} <b>${h.label}</b><br>${c.text}</span>
+                        ${c.ctrl}
+                    </div>`;
+                }).join('');
+
+                return `<div class="edit-person">
+                    <h3>
+                        <span class="${PREFIX[person]}-color">${NAMES[person]}</span>
+                        <span class="ep-bottles">${b.subtotal} ${bottleIcon()}</span>
+                    </h3>
+                    ${rows}
+                </div>`;
+            }).join('');
+
+            return `${note}
+                <div class="edit-people">${cards}</div>
+                <p style="color:var(--text-muted);font-size:0.75rem;line-height:1.5;margin-top:0.85rem">
+                    As garrafinhas mostradas aqui são só as do dia (hábitos + dia perfeito).
+                    Os bônus de streak dependem dos dias vizinhos e aparecem no placar da temporada.
+                </p>`;
+        }
+
+        // ── Escrita ────────────────────────────────────────
+        // Hoje edita o estado ao vivo; dias passados editam o histórico.
+        function writeDayField(person, field, resolveValue) {
             if (!currentEditDate) return;
-            const rootRef = db.ref(`aposta/history/${currentEditDate}`);
-            rootRef.once('value', snapshot => {
+            const date = currentEditDate;
+
+            if (date === liveDate) {
+                const ref = ROOT.child('state').child(person);
+                ref.once('value', snap => {
+                    const cur = snap.val() || {};
+                    ref.update({ [field]: resolveValue(cur[field]) });
+                });
+                return;
+            }
+
+            const ref = db.ref(`aposta/history/${date}`);
+            ref.once('value', snapshot => {
                 let dayData = snapshot.val();
                 if (typeof dayData !== 'object' || dayData === null) {
-                    dayData = { result: typeof dayData === 'string' ? dayData : 'empate', state: { guilherme: {}, luana: {} } };
+                    dayData = { result: typeof dayData === 'string' ? dayData : 'empate', state: {} };
                 }
-                if (!dayData.state) dayData.state = { guilherme: {}, luana: {} };
-                if (!dayData.state[person]) dayData.state[person] = {};
-                
-                dayData.state[person][field] = Math.max(0, (dayData.state[person][field] || 0) + delta);
-                rootRef.set(dayData).then(() => recalculateResult(currentEditDate));
+                if (!dayData.state)          dayData.state = {};
+                if (!dayData.state[person])  dayData.state[person] = {};
+
+                dayData.state[person][field] = resolveValue(dayData.state[person][field]);
+                dayData.result = dayWinner(date, dayData.state);
+                ref.set(dayData);
             });
+        }
+
+        function updateHistory(person, field, delta) {
+            writeDayField(person, field, cur => Math.max(0, (cur || 0) + delta));
         }
 
         function toggleHistory(person, field) {
-            if (!currentEditDate) return;
-            const rootRef = db.ref(`aposta/history/${currentEditDate}`);
-            rootRef.once('value', snapshot => {
-                let dayData = snapshot.val();
-                if (typeof dayData !== 'object' || dayData === null) {
-                    dayData = { result: typeof dayData === 'string' ? dayData : 'empate', state: { guilherme: {}, luana: {} } };
-                }
-                if (!dayData.state) dayData.state = { guilherme: {}, luana: {} };
-                if (!dayData.state[person]) dayData.state[person] = {};
-                
-                dayData.state[person][field] = !dayData.state[person][field];
-                rootRef.set(dayData).then(() => recalculateResult(currentEditDate));
-            });
+            writeDayField(person, field, cur => !cur);
         }
 
-        function recalculateResult(dateStr) {
-            const ref = db.ref(`aposta/history/${dateStr}`);
-            ref.once('value', snapshot => {
-                const data = snapshot.val();
-                if (!data || !data.state) return;
-                // Mesmas metas e mesmo cálculo (6 critérios) usados na página principal
-                ref.update({ result: dayWinner(dateStr, data.state) }).then(() => {
-                    recalculateGlobalPoints();
-                });
-            });
+        function setHistorySteps(person) {
+            const input = document.getElementById(`edit-${person}-steps`);
+            if (!input) return;
+            const val = Math.max(0, Math.round(Number(input.value) || 0));
+            writeDayField(person, 'steps', () => val);
         }
 
-        // Reescreve o placar a partir do histórico da TEMPORADA atual.
-        function recalculateGlobalPoints() {
-            db.ref('aposta/history').once('value', snapshot => {
-                const history = snapshot.val();
-                if (!history) return;   // nunca zera o placar por histórico vazio
-                const t = countSeasonPoints(history);
-                db.ref('aposta/points').update({ guilherme: t.guilherme, luana: t.luana });
-            });
-        }
+        // ── Listener ───────────────────────────────────────
+        ROOT.on('value', snapshot => {
+            const data = snapshot.val() || {};
+            historyData = data.history || {};
+            liveState   = data.state   || {};
+            liveDate    = data.date || todayStr();
+            season      = computeSeason(historyData, liveState, liveDate, todayStr());
 
-        // Se o placar salvo divergir do histórico da temporada, corrige sozinho.
-        function syncPointsWithHistory() {
-            if (!historyData || Object.keys(historyData).length === 0) return;
-            const t = countSeasonPoints(historyData);
-            db.ref('aposta/points').once('value', snap => {
-                const p = snap.val() || {};
-                if ((p.guilherme || 0) !== t.guilherme || (p.luana || 0) !== t.luana) {
-                    db.ref('aposta/points').update({ guilherme: t.guilherme, luana: t.luana });
-                }
-            });
-        }
-
-        db.ref('aposta/history').on('value', snapshot => {
-            historyData = snapshot.val() || {};
             renderCalendar();
-            syncPointsWithHistory();
-            if (currentEditDate && historyData[currentEditDate]) {
-                // Atualizar o modal se estiver aberto
-                const dayData = historyData[currentEditDate];
-                const content = document.getElementById('editContent');
-                content.innerHTML = generateEditHTML(currentEditDate, dayData.state || {});
-            }
+
+            // Não redesenha o modal enquanto o usuário digita dentro dele
+            const active = document.activeElement;
+            const typing = active && active.tagName === 'INPUT' &&
+                           active.closest('#editModal');
+            if (currentEditDate && !typing) renderEditModal();
         });
     </script>
 </body>
