@@ -21,6 +21,17 @@ const DB_URL = firebaseConfig.databaseURL;
 // ── Temporada ──────────────────────────────────────────────
 // Ao mudar CURRENT_SEASON o placar é zerado automaticamente.
 const CURRENT_SEASON = 'agosto-setembro-2026';
+
+// A versão antiga do site pode continuar viva num navegador (aba aberta há
+// dias, JS em cache). Ela lê a chave `season` e ZERA o dia toda vez que o
+// valor não é 'junho-julho-2026' — o que apagava o que acabou de ser marcado.
+// Solução: a temporada nova mora em `seasonV2` e `season` fica congelada no
+// valor antigo, então a aba velha se acha em dia e não mexe em nada.
+// Quando ninguém mais tiver o site antigo em cache, dá para voltar a usar
+// `season` e remover as duas constantes LEGACY_*.
+const SEASON_KEY          = 'seasonV2';
+const LEGACY_SEASON_KEY   = 'season';
+const LEGACY_SEASON_VALUE = 'junho-julho-2026';
 const SEASON_START   = '2026-08-03';   // segunda-feira
 const SEASON_END     = '2026-09-30';
 const SEASON_LABEL   = 'Temporada Ago–Set 2026';

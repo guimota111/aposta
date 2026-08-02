@@ -99,15 +99,28 @@ function checkAndCloseDay(data) {
 
 // ── Troca de temporada (zera placar) ──────────────────────
 function checkSeason(data) {
-    if (data.season === CURRENT_SEASON) return;
+    // Congela a chave antiga: é o que impede uma aba com a versão anterior
+    // do site de achar que virou a temporada e zerar o dia em andamento.
+    if (data[LEGACY_SEASON_KEY] !== LEGACY_SEASON_VALUE) {
+        ROOT.child(LEGACY_SEASON_KEY).set(LEGACY_SEASON_VALUE);
+    }
 
-    ROOT.child('season').transaction(currentSeason => {
+    if (data[SEASON_KEY] === CURRENT_SEASON) return;
+
+    ROOT.child(SEASON_KEY).transaction(currentSeason => {
         if (currentSeason === CURRENT_SEASON) return undefined;
         return CURRENT_SEASON;
     }, (error, committed) => {
         if (error || !committed) return;
-        // O histórico antigo fica no banco, mas fora da janela da temporada
-        // não conta garrafinhas nem aparece no calendário.
+
+        // NUNCA apagar um dia em andamento. Se o estado já é de hoje, ele
+        // pertence à temporada nova e tem que sobreviver à troca — senão uma
+        // aba com a versão antiga do site (que aponta para outra temporada)
+        // fica zerando o dia toda vez que carrega.
+        // O histórico antigo continua no banco: fora da janela da temporada
+        // ele não conta garrafinhas nem aparece no calendário.
+        if (data.date === todayStr()) return;
+
         ROOT.update({
             state: EMPTY_STATE,
             date:  todayStr()
@@ -122,9 +135,10 @@ function startListening() {
 
         if (!data) {
             ROOT.set({
-                season: CURRENT_SEASON,
-                date:   todayStr(),
-                state:  EMPTY_STATE
+                [SEASON_KEY]:        CURRENT_SEASON,
+                [LEGACY_SEASON_KEY]: LEGACY_SEASON_VALUE,
+                date:                todayStr(),
+                state:               EMPTY_STATE
             });
             return;
         }
