@@ -284,10 +284,44 @@ body {
 #luana-card    .overall-fill  { background: linear-gradient(90deg, #e11d48, #fb7185); }
 
 .overall-score {
-    font-size: 1.5rem;
-    font-weight: 800;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
     flex-shrink: 0;
 }
+
+.os-value {
+    display: flex;
+    align-items: center;
+    gap: 0.22rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.os-value .bottle-ico { font-size: 1.35rem; }
+
+/* "teria ganhado" no fim de semana — o número não conta para o placar */
+.os-note {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.os-note:empty { display: none; }
+
+.overall-score.not-counting .os-value { opacity: 0.55; }
+
+/* Garrafinha no hábito completado (injetada por script.js) */
+.task-bottle {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+.task-bottle:empty { display: none; }
 
 /* ── Tasks ── */
 .task {
@@ -355,11 +389,8 @@ body {
     border-radius: 10px;
 }
 
-.day-bottles .db-total  { font-size: 0.95rem; color: var(--text); }
-.day-bottles .db-total strong { font-size: 1.15rem; font-weight: 900; }
-.day-bottles .db-detail { font-size: 0.74rem; color: var(--text-muted); }
-.day-bottles .db-muted  { font-size: 0.8rem; color: var(--text-muted); }
-.day-bottles .bottle-ico { font-size: 1.15rem; }
+.day-bottles .db-detail { font-size: 0.76rem; color: var(--text-muted); }
+.day-bottles .db-muted  { font-size: 0.78rem; color: var(--text-muted); }
 
 /* ── Campo de passos ── */
 .steps-actions { align-items: stretch; }
